@@ -10,8 +10,7 @@ export default function Navbar() {
     return (
         <nav className={styles.navbar}>
             <div className={styles.brand}>
-                <span className={styles.logo}>🔗</span>
-                <h1 className={styles.title}>ConnectionGraph</h1>
+                <h1 className={styles.title}>Nodely</h1>
             </div>
 
             <div className={styles.stats}>
