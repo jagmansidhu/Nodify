@@ -27,8 +27,9 @@ interface ConnectionsContextType {
     // Selection
     selectConnection: (connection: ConnectionNode | null) => void;
 
-    // Add connections (for LinkedIn import)
+    // Manage connections
     addConnections: (newConnections: Connection[]) => void;
+    deleteConnection: (id: string) => Promise<void>;
     clearAllConnections: () => void;
 
     // Stats
@@ -230,6 +231,24 @@ export function ConnectionsProvider({ children }: { children: React.ReactNode })
         }
     }, []);
 
+    // Delete a connection
+    const deleteConnection = useCallback(async (id: string) => {
+        // Remove from local state
+        setRawConnections(prev => prev.filter(c => c.id !== id));
+        setSelectedConnection(null);
+
+        // Delete from Snowflake if enabled
+        if (USE_SNOWFLAKE_API) {
+            try {
+                await fetch(`/api/connections?id=${encodeURIComponent(id)}`, {
+                    method: 'DELETE',
+                });
+            } catch (error) {
+                console.error('Failed to delete from Snowflake:', error);
+            }
+        }
+    }, []);
+
     const clearAllConnections = useCallback(() => {
         setRawConnections([]);
         setSelectedConnection(null);
@@ -249,6 +268,7 @@ export function ConnectionsProvider({ children }: { children: React.ReactNode })
         clearFilters,
         selectConnection,
         addConnections,
+        deleteConnection,
         clearAllConnections,
         stats,
     };

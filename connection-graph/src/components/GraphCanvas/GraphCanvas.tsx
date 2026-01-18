@@ -45,8 +45,10 @@ function getNodeSize(node: SimNode, baseRadius: number): number {
 export default function GraphCanvas() {
     const svgRef = useRef<SVGSVGElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
-    const { filteredConnections, links, selectConnection, selectedConnection } = useConnections();
+    const { filteredConnections, links, selectConnection, selectedConnection, deleteConnection } = useConnections();
     const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
+    // Store node positions to persist across updates
+    const nodePositionsRef = useRef<Map<string, { x: number; y: number }>>(new Map());
 
     useEffect(() => {
         const updateDimensions = () => {
@@ -80,12 +82,53 @@ export default function GraphCanvas() {
             fy: centerY,
         };
 
-        const connectionNodes: SimNode[] = filteredConnections.map((conn, i) => ({
-            id: conn.id,
-            connection: conn,
-            x: centerX + (Math.random() - 0.5) * 300,
-            y: centerY + (Math.random() - 0.5) * 300,
-        }));
+        // First pass: create node map to find parent positions
+        const connById = new Map(filteredConnections.map(c => [c.id, c]));
+
+        // Calculate angles for 1st degree connections (spread evenly)
+        const firstDegree = filteredConnections.filter(c => c.degree === 1);
+        const angleByFirstDegree = new Map<string, number>();
+        firstDegree.forEach((conn, i) => {
+            angleByFirstDegree.set(conn.id, (i / firstDegree.length) * Math.PI * 2);
+        });
+
+        const connectionNodes: SimNode[] = filteredConnections.map((conn) => {
+            // Use saved position or calculate a new one based on degree
+            const savedPos = nodePositionsRef.current.get(conn.id);
+
+            let angle: number;
+            if (conn.degree === 1) {
+                angle = angleByFirstDegree.get(conn.id) || Math.random() * Math.PI * 2;
+            } else if (conn.connectedThrough) {
+                // Find parent's angle and add small variation
+                const parent = connById.get(conn.connectedThrough);
+                if (parent && parent.degree === 1) {
+                    angle = (angleByFirstDegree.get(parent.id) || 0) + (Math.random() - 0.5) * 0.5;
+                } else if (parent?.connectedThrough) {
+                    // 3rd degree - find grandparent
+                    const grandparent = connById.get(parent.connectedThrough);
+                    angle = (angleByFirstDegree.get(grandparent?.id || '') || 0) + (Math.random() - 0.5) * 0.7;
+                } else {
+                    angle = Math.random() * Math.PI * 2;
+                }
+            } else {
+                angle = Math.random() * Math.PI * 2;
+            }
+
+            const degreeRadius = {
+                1: 120,
+                2: 220,
+                3: 320,
+            };
+            const radius = degreeRadius[conn.degree] || 150;
+
+            return {
+                id: conn.id,
+                connection: conn,
+                x: savedPos?.x ?? centerX + Math.cos(angle) * radius,
+                y: savedPos?.y ?? centerY + Math.sin(angle) * radius,
+            };
+        });
 
         const nodes: SimNode[] = [userNode, ...connectionNodes];
         const nodeById = new Map(nodes.map(n => [n.id, n]));
@@ -185,26 +228,36 @@ export default function GraphCanvas() {
         };
 
         const simulation = d3.forceSimulation(nodes)
+            .alphaDecay(0.03) // Faster settling (default is 0.0228)
+            .velocityDecay(0.4) // More friction to reduce shaking
             .force('radial', radialForce)
             .force('link', d3.forceLink<SimNode, SimLink>(simLinks)
                 .id(d => d.id)
                 .distance(d => {
                     const source = d.source as SimNode;
-                    const target = d.target as SimNode;
                     if (source.isUser) {
-                        return degreeRadius[1]; // Link to 1st degree ring
+                        return degreeRadius[1];
                     }
-                    // Shorter distance for connections within rings
-                    const targetDegree = target.connection?.degree || 2;
-                    return degreeRadius[targetDegree] - degreeRadius[targetDegree - 1 as 1 | 2] || 80;
+                    return 80; // Slightly more distance between parent-child
                 })
-                .strength(0.3))
+                .strength(d => {
+                    const source = d.source as SimNode;
+                    return source.isUser ? 0.2 : 0.5;
+                }))
             .force('charge', d3.forceManyBody()
-                .strength(d => (d as SimNode).isUser ? -400 : -60)
-                .distanceMax(300))
+                .strength(d => (d as SimNode).isUser ? -500 : -80)
+                .distanceMax(400))
             .force('collision', d3.forceCollide<SimNode>()
-                .radius(d => getNodeSize(d, baseRadius) * 2.2)
-                .strength(0.8));
+                .radius(d => getNodeSize(d, baseRadius) * 3)
+                .strength(1))
+            .alpha(0.3) // Start with lower energy
+            .alphaTarget(0);
+
+        // Pre-run simulation to settle positions before rendering (no shaking)
+        for (let i = 0; i < 100; i++) {
+            simulation.tick();
+        }
+        simulation.alpha(0.1); // Very low energy after pre-simulation
 
         const nodeGroups = container.selectAll<SVGGElement, SimNode>('g.node')
             .data(nodes, d => d.id)
@@ -335,6 +388,13 @@ export default function GraphCanvas() {
                 .attr('y2', d => (d.target as SimNode).y!);
 
             nodeGroups.attr('transform', d => `translate(${d.x},${d.y})`);
+
+            // Save positions for persistence
+            nodes.forEach(node => {
+                if (!node.isUser && node.x !== undefined && node.y !== undefined) {
+                    nodePositionsRef.current.set(node.id, { x: node.x, y: node.y });
+                }
+            });
         });
 
         return () => {
@@ -366,6 +426,20 @@ export default function GraphCanvas() {
             {filteredConnections.length === 0 && (
                 <div className={styles.emptyState}>
                     <p>No connections match your filters</p>
+                </div>
+            )}
+            {selectedConnection && (
+                <div className={styles.selectedPanel}>
+                    <div className={styles.selectedInfo}>
+                        <strong>{selectedConnection.name}</strong>
+                        <span>{selectedConnection.title} at {selectedConnection.company}</span>
+                    </div>
+                    <button
+                        className={styles.deleteBtn}
+                        onClick={() => deleteConnection(selectedConnection.id)}
+                    >
+                        🗑️ Delete
+                    </button>
                 </div>
             )}
         </div>

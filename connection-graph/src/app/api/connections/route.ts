@@ -18,12 +18,19 @@ export async function GET() {
             linkedIn: row.LINKEDIN || undefined,
             lastContactDate: (() => {
                 try {
-                    if (row.LAST_CONTACT_DATE) {
-                        const d = new Date(row.LAST_CONTACT_DATE as string);
-                        return isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString();
+                    const rawDate = row.LAST_CONTACT_DATE;
+
+                    if (rawDate) {
+                        // Snowflake returns epoch seconds as a string like "1768513732.630000000"
+                        const epochSeconds = parseFloat(String(rawDate));
+                        if (!isNaN(epochSeconds)) {
+                            const d = new Date(epochSeconds * 1000); // Convert seconds to milliseconds
+                            return d.toISOString();
+                        }
                     }
                     return new Date().toISOString();
-                } catch {
+                } catch (e) {
+                    console.error('Date parse error:', e);
                     return new Date().toISOString();
                 }
             })(),
@@ -80,6 +87,35 @@ export async function POST(request: NextRequest) {
         console.error('Error inserting connection:', error);
         return NextResponse.json(
             { error: 'Failed to save connection', details: error instanceof Error ? error.message : 'Unknown error' },
+            { status: 500 }
+        );
+    }
+}
+
+// DELETE - Remove a connection from Snowflake
+export async function DELETE(request: NextRequest) {
+    try {
+        const { searchParams } = new URL(request.url);
+        const id = searchParams.get('id');
+
+        if (!id) {
+            return NextResponse.json(
+                { error: 'Missing connection ID' },
+                { status: 400 }
+            );
+        }
+
+        // Escape single quotes
+        const escapedId = id.replace(/'/g, "''");
+        const sql = `DELETE FROM CONNECTIONS WHERE ID = '${escapedId}'`;
+
+        await executeInsert(sql); // executeInsert works for any SQL that doesn't return rows
+
+        return NextResponse.json({ success: true, deletedId: id });
+    } catch (error) {
+        console.error('Error deleting connection:', error);
+        return NextResponse.json(
+            { error: 'Failed to delete connection', details: error instanceof Error ? error.message : 'Unknown error' },
             { status: 500 }
         );
     }

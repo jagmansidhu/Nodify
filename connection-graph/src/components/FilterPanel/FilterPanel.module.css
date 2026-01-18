@@ -1,11 +1,11 @@
 .panel {
-    width: 280px;
-    background: var(--panel-bg);
+    width: 300px;
+    background: var(--bg-secondary);
     border-right: 1px solid var(--border);
-    padding: 1.5rem;
+    padding: 24px;
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 28px;
     overflow-y: auto;
 }
 
@@ -16,69 +16,72 @@
 }
 
 .header h2 {
-    font-size: 1.25rem;
+    font-size: 20px;
     font-weight: 600;
     color: var(--text-primary);
+    letter-spacing: -0.02em;
 }
 
 .clearBtn {
     background: transparent;
     border: none;
     color: var(--accent);
-    font-size: 0.85rem;
+    font-size: 13px;
+    font-weight: 500;
     cursor: pointer;
-    transition: opacity 0.2s;
+    padding: 6px 12px;
+    border-radius: var(--radius-full);
+    transition: background 0.2s;
 }
 
 .clearBtn:hover {
-    opacity: 0.8;
+    background: var(--accent-glow);
 }
 
 .section {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 12px;
 }
 
 .sectionTitle {
-    font-size: 0.75rem;
+    font-size: 11px;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    color: var(--text-tertiary);
     font-weight: 600;
 }
 
 .searchInput {
     width: 100%;
-    padding: 0.65rem 0.9rem;
-    background: var(--input-bg);
-    border: 1px solid var(--border);
-    border-radius: 8px;
+    padding: 12px 16px;
+    background: var(--bg-tertiary);
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
     color: var(--text-primary);
-    font-size: 0.9rem;
-    transition: border-color 0.2s, box-shadow 0.2s;
+    font-size: 15px;
 }
 
 .searchInput:focus {
     outline: none;
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px var(--accent-glow);
+    background: var(--bg-elevated);
 }
 
 .searchInput::placeholder {
-    color: var(--text-muted);
+    color: var(--text-tertiary);
 }
 
+/* Heat Filters */
 .heatFilters {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 8px;
 }
 
 .heatOption {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
     cursor: pointer;
 }
 
@@ -87,22 +90,31 @@
 }
 
 .heatBadge {
-    padding: 0.4rem 0.75rem;
-    border-radius: 20px;
-    font-size: 0.85rem;
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: var(--radius-md);
+    font-size: 14px;
     font-weight: 500;
-    color: white;
-    transition: opacity 0.2s, transform 0.2s;
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    border: 1px solid transparent;
+    transition: all 0.2s;
 }
 
 .heatOption:hover .heatBadge {
-    transform: translateX(3px);
+    background: var(--bg-elevated);
+    color: var(--text-primary);
 }
 
+.heatOption input:checked+.heatBadge {
+    border-color: currentColor;
+}
+
+/* Industry Filters */
 .industryFilters {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem;
+    gap: 8px;
 }
 
 .industryOption {
@@ -115,55 +127,34 @@
 
 .industryTag {
     display: inline-block;
-    padding: 0.35rem 0.7rem;
-    background: var(--input-bg);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    font-size: 0.8rem;
+    padding: 8px 14px;
+    background: var(--bg-tertiary);
+    border: 1px solid transparent;
+    border-radius: var(--radius-full);
+    font-size: 13px;
+    font-weight: 500;
     color: var(--text-secondary);
     transition: all 0.2s;
 }
 
 .industryTag:hover {
-    border-color: var(--accent);
+    background: var(--bg-elevated);
     color: var(--text-primary);
 }
 
 .industryTag.active {
     background: var(--accent);
-    border-color: var(--accent);
     color: white;
 }
 
-.stats {
-    margin-top: auto;
-    padding-top: 1rem;
-    border-top: 1px solid var(--border);
-    text-align: center;
-}
-
-.statLabel {
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-
-.statValue {
-    font-size: 2rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin-top: 0.25rem;
-}
-
-/* Degree Filter Styles */
+/* Degree Filters */
 .degreeFilters {
     display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
+    gap: 8px;
 }
 
 .degreeOption {
+    flex: 1;
     cursor: pointer;
 }
 
@@ -172,23 +163,48 @@
 }
 
 .degreeBadge {
-    display: inline-block;
-    padding: 0.4rem 0.7rem;
-    background: var(--input-bg);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    font-size: 0.8rem;
+    display: block;
+    padding: 10px 12px;
+    background: var(--bg-tertiary);
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
+    font-size: 12px;
+    font-weight: 500;
     color: var(--text-secondary);
+    text-align: center;
     transition: all 0.2s;
 }
 
 .degreeBadge:hover {
-    border-color: var(--accent);
+    background: var(--bg-elevated);
     color: var(--text-primary);
 }
 
 .degreeBadge.active {
     background: var(--accent);
-    border-color: var(--accent);
     color: white;
+}
+
+/* Stats */
+.stats {
+    margin-top: auto;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    text-align: center;
+}
+
+.statLabel {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 600;
+}
+
+.statValue {
+    font-size: 48px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.03em;
+    margin-top: 4px;
 }

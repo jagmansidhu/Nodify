@@ -2,27 +2,28 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
+    gap: 8px;
     width: 100%;
-    padding: 0.6rem 1rem;
-    background: var(--input-bg);
-    border: 1px dashed var(--border);
-    border-radius: 8px;
+    padding: 12px 16px;
+    background: var(--bg-tertiary);
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
     color: var(--text-secondary);
-    font-size: 0.85rem;
+    font-size: 14px;
+    font-weight: 500;
     cursor: pointer;
     transition: all 0.2s;
 }
 
 .addButton:hover {
-    border-color: var(--accent);
+    background: var(--bg-elevated);
     color: var(--text-primary);
 }
 
 .container {
-    background: var(--input-bg);
+    background: var(--bg-tertiary);
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     overflow: hidden;
 }
 
@@ -30,10 +31,10 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.6rem 0.8rem;
-    background: var(--panel-bg);
+    padding: 12px 16px;
+    background: var(--bg-elevated);
     border-bottom: 1px solid var(--border);
-    font-size: 0.8rem;
+    font-size: 13px;
     font-weight: 600;
     color: var(--text-primary);
 }
@@ -41,9 +42,12 @@
 .closeBtn {
     background: none;
     border: none;
-    color: var(--text-muted);
+    color: var(--text-tertiary);
     cursor: pointer;
-    font-size: 0.9rem;
+    font-size: 16px;
+    padding: 4px;
+    border-radius: 4px;
+    transition: color 0.2s;
 }
 
 .closeBtn:hover {
@@ -51,33 +55,34 @@
 }
 
 .form {
-    padding: 0.8rem;
+    padding: 16px;
     display: flex;
     flex-direction: column;
-    gap: 0.6rem;
+    gap: 12px;
 }
 
 .field {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: 6px;
 }
 
 .field label {
-    font-size: 0.7rem;
-    color: var(--text-muted);
+    font-size: 11px;
+    color: var(--text-tertiary);
     text-transform: uppercase;
-    letter-spacing: 0.03em;
+    letter-spacing: 0.05em;
+    font-weight: 600;
 }
 
 .field input,
 .field select {
-    padding: 0.5rem 0.6rem;
-    background: var(--bg-primary);
+    padding: 10px 12px;
+    background: var(--bg-secondary);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     color: var(--text-primary);
-    font-size: 0.85rem;
+    font-size: 14px;
 }
 
 .field input:focus,
@@ -87,29 +92,20 @@
 }
 
 .field input::placeholder {
-    color: var(--text-muted);
-}
-
-.row {
-    display: flex;
-    gap: 0.5rem;
-}
-
-.row .field {
-    flex: 1;
+    color: var(--text-tertiary);
 }
 
 .submitBtn {
-    margin-top: 0.3rem;
-    padding: 0.6rem;
+    margin-top: 4px;
+    padding: 12px;
     background: var(--accent);
     border: none;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     color: white;
-    font-size: 0.85rem;
+    font-size: 14px;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: filter 0.2s;
 }
 
 .submitBtn:hover {
@@ -118,7 +114,8 @@
 
 .success {
     text-align: center;
-    color: #4ade80;
-    font-size: 0.8rem;
-    padding: 0.3rem;
+    color: #30d158;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 8px;
 }
