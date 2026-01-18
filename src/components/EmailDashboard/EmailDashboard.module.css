@@ -1,8 +1,11 @@
-/* Email Dashboard - Matching Connections Page Style */
+/* Email Dashboard - Apple-Inspired Design */
 .container {
-    height: 100vh;
-    background: radial-gradient(ellipse at center, #0d0d0d 0%, #000000 100%);
+    min-height: 100vh;
+    background: #000000;
+    background-image:
+        radial-gradient(ellipse at 50% 0%, rgba(99, 102, 241, 0.08) 0%, transparent 60%);
     overflow-y: auto;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif;
 }
 
 /* Frosted Glass Header */
@@ -10,44 +13,44 @@
     position: sticky;
     top: 0;
     z-index: 100;
-    background: rgba(13, 13, 13, 0.8);
+    background: rgba(22, 22, 23, 0.72);
     backdrop-filter: saturate(180%) blur(20px);
     -webkit-backdrop-filter: saturate(180%) blur(20px);
-    border-bottom: 1px solid var(--border);
-    padding: 14px 24px;
+    border-bottom: 0.5px solid rgba(255, 255, 255, 0.08);
+    padding: 12px 24px;
 }
 
 .navBar {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
 }
 
 .brandTitle {
     margin-left: auto;
-    font-size: 18px;
+    font-size: 17px;
     font-weight: 600;
-    color: var(--text-primary);
-    letter-spacing: -0.02em;
+    color: rgba(255, 255, 255, 0.92);
+    letter-spacing: -0.022em;
 }
 
 .navLink {
     display: flex;
     align-items: center;
-    gap: 6px;
-    color: var(--text-secondary);
+    gap: 5px;
+    color: rgba(255, 255, 255, 0.55);
     text-decoration: none;
     font-size: 13px;
     font-weight: 500;
-    padding: 6px 12px;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: var(--radius-full);
-    transition: all 0.2s;
+    padding: 7px 12px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 8px;
+    transition: all 0.15s ease;
 }
 
 .navLink:hover {
     background: rgba(255, 255, 255, 0.1);
-    color: var(--text-primary);
+    color: rgba(255, 255, 255, 0.85);
 }
 
 .navLink svg {
@@ -55,69 +58,71 @@
     height: 14px;
 }
 
-/* Header Row Layout */
+/* Header Controls */
 .headerRow {
     display: flex;
     align-items: center;
     gap: 12px;
-    margin-top: 14px;
+    margin-top: 12px;
     flex-wrap: wrap;
 }
 
-/* Source Toggle - Pill Style */
+/* Segmented Control */
 .sourceToggle {
     display: flex;
-    background: var(--bg-tertiary);
-    border-radius: var(--radius-full);
-    padding: 3px;
+    background: rgba(118, 118, 128, 0.12);
+    border-radius: 8px;
+    padding: 2px;
 }
 
 .toggleOpt {
-    padding: 6px 16px;
+    padding: 6px 14px;
     border: none;
     background: transparent;
-    color: var(--text-secondary);
+    color: rgba(255, 255, 255, 0.55);
     font-size: 13px;
     font-weight: 500;
     cursor: pointer;
-    border-radius: var(--radius-full);
-    transition: all 0.2s;
+    border-radius: 6px;
+    transition: all 0.2s ease;
 }
 
 .toggleOpt:hover {
-    color: var(--text-primary);
+    color: rgba(255, 255, 255, 0.75);
 }
 
 .toggleOpt.active {
-    background: var(--accent);
+    background: rgba(255, 255, 255, 0.1);
     color: #fff;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
 }
 
-/* Connected Email Badge */
+/* Connected Status */
 .connectedEmail {
     display: flex;
     align-items: center;
     gap: 6px;
-    color: var(--text-tertiary);
-    font-size: 12px;
+    color: rgba(255, 255, 255, 0.45);
+    font-size: 13px;
 }
 
 .connectedDot {
-    width: 6px;
-    height: 6px;
+    width: 8px;
+    height: 8px;
     background: #30d158;
     border-radius: 50%;
+    box-shadow: 0 0 8px rgba(48, 209, 88, 0.5);
 }
 
-/* Cache Indicator */
+/* Status Pills */
 .cacheIndicator {
     display: flex;
     align-items: center;
     gap: 4px;
     padding: 5px 10px;
-    background: rgba(191, 90, 242, 0.1);
-    border-radius: var(--radius-full);
-    color: var(--accent);
+    background: rgba(10, 132, 255, 0.15);
+    border-radius: 6px;
+    color: #0a84ff;
     font-size: 11px;
     font-weight: 500;
 }
@@ -125,45 +130,45 @@
 /* Buttons */
 .refreshButton,
 .disconnectButton {
-    padding: 6px 14px;
+    padding: 7px 14px;
     border: none;
-    border-radius: var(--radius-full);
-    font-size: 12px;
+    border-radius: 8px;
+    font-size: 13px;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.15s ease;
 }
 
 .refreshButton {
-    background: var(--accent-glow);
-    color: var(--accent);
+    background: rgba(10, 132, 255, 0.15);
+    color: #0a84ff;
 }
 
 .refreshButton:hover {
-    background: rgba(191, 90, 242, 0.25);
+    background: rgba(10, 132, 255, 0.22);
 }
 
 .refreshButton:disabled {
-    opacity: 0.4;
+    opacity: 0.35;
     cursor: not-allowed;
 }
 
 .disconnectButton {
-    background: rgba(255, 107, 107, 0.1);
-    color: var(--heat-hot);
+    background: rgba(255, 69, 58, 0.12);
+    color: #ff453a;
 }
 
 .disconnectButton:hover {
-    background: rgba(255, 107, 107, 0.2);
+    background: rgba(255, 69, 58, 0.18);
 }
 
-/* Dashboard Layout */
+/* Layout */
 .dashboardLayout {
     display: grid;
-    grid-template-columns: 280px 1fr;
+    grid-template-columns: 240px 1fr;
     gap: 24px;
     padding: 24px;
-    max-width: 1400px;
+    max-width: 1320px;
     margin: 0 auto;
 }
 
@@ -175,13 +180,9 @@
     .dashboardLayout {
         grid-template-columns: 1fr;
     }
-
-    .sidebar {
-        display: none;
-    }
 }
 
-/* Stats Grid */
+/* Stats Cards */
 .statsGrid {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
@@ -196,51 +197,54 @@
 }
 
 .statCard {
-    background: var(--bg-elevated);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
+    background: rgba(28, 28, 30, 0.6);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 0.5px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
     padding: 16px;
     text-align: center;
-    transition: all 0.2s;
+    transition: all 0.2s ease;
 }
 
 .statCard:hover {
-    border-color: var(--border-hover);
+    background: rgba(38, 38, 40, 0.7);
+    transform: scale(1.02);
 }
 
 .statValue {
-    font-size: 28px;
-    font-weight: 700;
-    color: var(--text-primary);
-    letter-spacing: -0.02em;
+    font-size: 34px;
+    font-weight: 600;
+    color: #fff;
+    letter-spacing: -0.022em;
+    line-height: 1;
 }
 
 .statValue.high {
-    color: var(--heat-hot);
+    color: #ff453a;
 }
 
 .statValue.medium {
-    color: var(--heat-warm);
+    color: #ff9f0a;
 }
 
 .statValue.low {
-    color: var(--heat-cold);
+    color: #64d2ff;
 }
 
 .statValue.response {
-    color: var(--accent);
+    color: #0a84ff;
 }
 
 .statLabel {
-    font-size: 10px;
-    color: var(--text-tertiary);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    font-weight: 600;
-    margin-top: 4px;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.45);
+    font-weight: 500;
+    margin-top: 6px;
+    letter-spacing: -0.01em;
 }
 
-/* Filter Bar */
+/* Filter Pills */
 .filterBar {
     display: flex;
     gap: 8px;
@@ -250,35 +254,34 @@
 
 .filterButton {
     padding: 8px 14px;
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-full);
-    color: var(--text-secondary);
+    background: rgba(118, 118, 128, 0.12);
+    border: none;
+    border-radius: 8px;
+    color: rgba(255, 255, 255, 0.55);
     font-size: 13px;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.15s ease;
 }
 
 .filterButton:hover {
-    background: var(--bg-elevated);
-    color: var(--text-primary);
+    background: rgba(118, 118, 128, 0.2);
+    color: rgba(255, 255, 255, 0.8);
 }
 
 .filterButton.active {
-    background: var(--accent-glow);
-    color: var(--accent);
-    border-color: var(--accent);
+    background: rgba(10, 132, 255, 0.18);
+    color: #0a84ff;
 }
 
-/* Email List */
-.emailList {
+/* Email Grid */
+.emailGrid {
     display: flex;
     flex-direction: column;
     gap: 10px;
 }
 
-/* Heatmap Section */
+/* Heatmap */
 .heatmapSection {
     margin-bottom: 24px;
 }
@@ -293,36 +296,28 @@
 .sectionTitle {
     font-size: 15px;
     font-weight: 600;
-    color: var(--text-primary);
+    color: rgba(255, 255, 255, 0.92);
     letter-spacing: -0.01em;
 }
 
 .toggleButton {
     padding: 6px 12px;
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-full);
-    color: var(--text-secondary);
+    background: rgba(118, 118, 128, 0.12);
+    border: none;
+    border-radius: 6px;
+    color: rgba(255, 255, 255, 0.55);
     font-size: 12px;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.15s ease;
 }
 
 .toggleButton:hover {
-    background: var(--bg-elevated);
-    color: var(--text-primary);
+    background: rgba(118, 118, 128, 0.2);
+    color: rgba(255, 255, 255, 0.8);
 }
 
-.heatmapWrapper {
-    background: var(--bg-elevated);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: 20px;
-    overflow: hidden;
-}
-
-/* Loading State */
+/* Loading */
 .loading {
     display: flex;
     flex-direction: column;
@@ -335,10 +330,10 @@
 .spinner {
     width: 28px;
     height: 28px;
-    border: 2.5px solid var(--border);
-    border-top-color: var(--accent);
+    border: 2.5px solid rgba(255, 255, 255, 0.08);
+    border-top-color: #0a84ff;
     border-radius: 50%;
-    animation: spin 0.8s linear infinite;
+    animation: spin 0.7s linear infinite;
 }
 
 @keyframes spin {
@@ -348,40 +343,43 @@
 }
 
 .loadingText {
-    color: var(--text-secondary);
-    font-size: 14px;
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 15px;
+    font-weight: 500;
 }
 
 /* Connect Card */
 .connectCard {
     max-width: 400px;
     margin: 100px auto;
-    padding: 40px;
-    background: var(--bg-elevated);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
+    padding: 44px 36px;
+    background: rgba(28, 28, 30, 0.6);
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+    border: 0.5px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
     text-align: center;
 }
 
 .connectIcon {
-    width: 56px;
-    height: 56px;
-    color: var(--accent);
+    width: 48px;
+    height: 48px;
+    color: #0a84ff;
     margin-bottom: 20px;
 }
 
 .connectTitle {
     font-size: 22px;
     font-weight: 600;
-    color: var(--text-primary);
+    color: #fff;
     margin-bottom: 10px;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.022em;
 }
 
 .connectDescription {
-    font-size: 14px;
-    color: var(--text-secondary);
-    line-height: 1.6;
+    font-size: 15px;
+    color: rgba(255, 255, 255, 0.55);
+    line-height: 1.5;
     margin-bottom: 24px;
 }
 
@@ -390,17 +388,17 @@
     align-items: center;
     gap: 8px;
     padding: 12px 24px;
-    background: var(--accent);
+    background: #0a84ff;
     color: #fff;
     text-decoration: none;
-    border-radius: var(--radius-full);
+    border-radius: 12px;
     font-size: 15px;
     font-weight: 600;
-    transition: all 0.2s;
+    transition: all 0.2s ease;
 }
 
 .connectButton:hover {
-    background: #a347d6;
+    background: #409cff;
     transform: scale(1.02);
 }
 
@@ -412,12 +410,12 @@
 /* Empty State */
 .emptyState {
     text-align: center;
-    padding: 60px 20px;
-    color: var(--text-tertiary);
+    padding: 80px 24px;
+    color: rgba(255, 255, 255, 0.45);
 }
 
 .emptyIcon {
     font-size: 48px;
     margin-bottom: 16px;
-    opacity: 0.5;
+    opacity: 0.4;
 }

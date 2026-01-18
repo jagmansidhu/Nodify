@@ -17,6 +17,12 @@ export function EmailCard({ email, connectedEmail }: EmailCardProps) {
     const priorityClass = email.analysis.priority.toLowerCase();
     const { analysis } = email;
 
+    const priorityLabels: Record<string, string> = {
+        HIGH: 'Important',
+        MEDIUM: 'Normal',
+        LOW: 'Low Priority',
+    };
+
     const formatDate = (date: Date) => {
         return new Intl.DateTimeFormat('en-US', {
             month: 'short',
@@ -27,7 +33,6 @@ export function EmailCard({ email, connectedEmail }: EmailCardProps) {
     };
 
     const handleCardClick = () => {
-        // Open preview modal instead of direct Gmail
         setShowPreview(true);
     };
 
@@ -57,7 +62,7 @@ export function EmailCard({ email, connectedEmail }: EmailCardProps) {
                     <div className={styles.headerTop}>
                         <div className={styles.priorityBadge}>
                             <span className={styles.priorityDot} />
-                            {email.analysis.priority} Priority
+                            {priorityLabels[email.analysis.priority]}
                         </div>
                         <span className={styles.date}>{formatDate(email.date)}</span>
                     </div>

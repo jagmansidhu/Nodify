@@ -1,134 +1,192 @@
-/* Email Card - Matching Connections Style */
+/* Email Card - Apple-Inspired Design */
 .card {
-    background: var(--bg-elevated);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
+    background: rgba(28, 28, 30, 0.5);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 0.5px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
     padding: 16px 18px;
     cursor: pointer;
-    transition: all 0.2s;
-    border-left: 3px solid transparent;
+    transition: all 0.2s ease;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
 }
 
 .card:hover {
-    background: var(--bg-tertiary);
-    border-color: var(--border-hover);
+    background: rgba(38, 38, 42, 0.65);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
 }
 
-.card.high {
-    border-left-color: var(--heat-hot);
+/* Header */
+.header {
+    margin-bottom: 8px;
 }
 
-.card.medium {
-    border-left-color: var(--heat-warm);
-}
-
-.card.low {
-    border-left-color: var(--heat-cold);
-}
-
-/* Card Header */
-.cardHeader {
+.headerTop {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
-    gap: 16px;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
 }
 
-.subject {
-    font-size: 14px;
+.priorityBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
     font-weight: 600;
-    color: var(--text-primary);
-    letter-spacing: -0.01em;
-    line-height: 1.35;
-    flex: 1;
+}
+
+.priorityDot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+}
+
+/* Priority Variants - Apple Colors */
+.card.high .priorityBadge {
+    background: rgba(255, 69, 58, 0.15);
+    color: #ff453a;
+}
+
+.card.high .priorityDot {
+    background: #ff453a;
+    box-shadow: 0 0 6px rgba(255, 69, 58, 0.4);
+}
+
+.card.medium .priorityBadge {
+    background: rgba(255, 159, 10, 0.15);
+    color: #ff9f0a;
+}
+
+.card.medium .priorityDot {
+    background: #ff9f0a;
+    box-shadow: 0 0 6px rgba(255, 159, 10, 0.4);
+}
+
+.card.low .priorityBadge {
+    background: rgba(100, 210, 255, 0.12);
+    color: #64d2ff;
+}
+
+.card.low .priorityDot {
+    background: #64d2ff;
+    box-shadow: 0 0 6px rgba(100, 210, 255, 0.3);
 }
 
 .date {
-    font-size: 11px;
-    color: var(--text-tertiary);
-    white-space: nowrap;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.4);
 }
 
-/* Sender Info */
+.subject {
+    font-size: 15px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.92);
+    letter-spacing: -0.01em;
+    line-height: 1.35;
+    margin: 0 0 6px;
+}
+
+/* Sender */
 .sender {
+    margin-bottom: 10px;
+}
+
+.fromName {
     font-size: 13px;
-    color: var(--text-secondary);
-    margin-bottom: 8px;
+    color: rgba(255, 255, 255, 0.65);
+    font-weight: 500;
+}
+
+.fromEmail {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.35);
+    margin-left: 4px;
 }
 
 /* Summary */
 .summary {
-    font-size: 13px;
-    color: var(--text-secondary);
-    line-height: 1.5;
     margin-bottom: 12px;
 }
 
-/* Badge Row */
-.badges {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    align-items: center;
+.summary p {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.55);
+    line-height: 1.5;
+    margin: 0;
 }
 
-.badge {
-    padding: 4px 10px;
-    border-radius: var(--radius-full);
-    font-size: 10px;
+/* Details */
+.details {
+    padding: 12px 0;
+    border-top: 0.5px solid rgba(255, 255, 255, 0.06);
+    margin-top: 10px;
+}
+
+.details h4 {
+    font-size: 11px;
     font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
+    color: rgba(255, 255, 255, 0.4);
+    margin: 0 0 8px;
+    letter-spacing: 0.015em;
 }
 
-.priorityBadge.high {
-    background: rgba(255, 107, 107, 0.15);
-    color: var(--heat-hot);
+.keyPoints {
+    margin: 0;
+    padding-left: 16px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.55);
+    line-height: 1.55;
 }
 
-.priorityBadge.medium {
-    background: rgba(255, 192, 120, 0.15);
-    color: var(--heat-warm);
+.keyPoints li {
+    margin-bottom: 3px;
 }
 
-.priorityBadge.low {
-    background: rgba(116, 192, 252, 0.15);
-    color: var(--heat-cold);
+/* Footer */
+.footer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-top: 10px;
+    border-top: 0.5px solid rgba(255, 255, 255, 0.05);
 }
 
 .actionBadge {
-    background: var(--accent-glow);
-    color: var(--accent);
+    padding: 4px 10px;
+    background: rgba(10, 132, 255, 0.12);
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 500;
+    color: #0a84ff;
 }
 
-.timeBadge {
-    background: var(--bg-tertiary);
-    color: var(--text-tertiary);
-    font-size: 10px;
+.actionBadge span {
+    text-transform: capitalize;
 }
 
-/* Details Button */
-.detailsButton {
+.expandButton {
+    margin-left: auto;
     padding: 5px 12px;
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-full);
-    color: var(--text-secondary);
+    background: rgba(118, 118, 128, 0.12);
+    border: none;
+    border-radius: 6px;
+    color: rgba(255, 255, 255, 0.55);
     font-size: 11px;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.2s;
-    margin-left: auto;
+    transition: all 0.15s ease;
 }
 
-.detailsButton:hover {
-    background: var(--bg-elevated);
-    color: var(--text-primary);
+.expandButton:hover {
+    background: rgba(118, 118, 128, 0.2);
+    color: rgba(255, 255, 255, 0.8);
 }
 
-/* Starred indicator */
-.starred {
-    color: #ffc078;
-    font-size: 12px;
+/* Expanded */
+.card.expanded {
+    border-color: rgba(10, 132, 255, 0.25);
 }

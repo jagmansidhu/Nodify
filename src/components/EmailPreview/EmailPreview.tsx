@@ -13,8 +13,14 @@ interface EmailPreviewProps {
 export function EmailPreview({ email, onClose, onOpenInGmail }: EmailPreviewProps) {
     const priorityColors: Record<string, string> = {
         HIGH: '#ff6b6b',
-        MEDIUM: '#ffc078',
-        LOW: '#74c0fc',
+        MEDIUM: '#ffb84d',
+        LOW: '#5bc0be',
+    };
+
+    const priorityLabels: Record<string, string> = {
+        HIGH: 'Important',
+        MEDIUM: 'Normal',
+        LOW: 'Low Priority',
     };
 
     const formatDate = (date: Date) => {
@@ -37,7 +43,7 @@ export function EmailPreview({ email, onClose, onOpenInGmail }: EmailPreviewProp
                             className={styles.priorityBadge}
                             style={{ background: priorityColors[email.analysis.priority] }}
                         >
-                            {email.analysis.priority}
+                            {priorityLabels[email.analysis.priority]}
                         </span>
                         <span className={styles.actionBadge}>
                             {email.analysis.action.replace('_', ' ')}
@@ -66,9 +72,9 @@ export function EmailPreview({ email, onClose, onOpenInGmail }: EmailPreviewProp
                 <div className={styles.aiSection}>
                     <div className={styles.aiLabel}>
                         <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14">
-                            <path d="M12 2L1 21h22L12 2zm0 4l7.53 13H4.47L12 6z" />
+                            <path d="M9 21c0 .5.4 1 1 1h4c.6 0 1-.5 1-1v-1H9v1zm3-19C8.1 2 5 5.1 5 9c0 2.4 1.2 4.5 3 5.7V17c0 .5.4 1 1 1h6c.6 0 1-.5 1-1v-2.3c1.8-1.3 3-3.4 3-5.7 0-3.9-3.1-7-7-7z" />
                         </svg>
-                        AI Summary
+                        Quick Overview
                     </div>
                     <p className={styles.summary}>{email.analysis.summary}</p>
 
