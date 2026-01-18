@@ -10,11 +10,13 @@ export type ResponseTime = 'ASAP' | 'This week' | 'When convenient' | 'No respon
 export interface EmailAnalysis {
     id: string;
     priority: Priority;
+    urgencyScore?: number; // 1-10 for fine-grained sorting within priority tiers
     action: ActionType;
     summary: string;
     suggestedResponseTime: ResponseTime;
     keyPoints?: string[];
     deadline?: string | null;
+    senderImportance?: 'VIP' | 'KNOWN' | 'UNKNOWN';
     reasoning?: string;
 }
 
@@ -75,13 +77,21 @@ export class GeminiService {
             priority = 'LOW';
         }
 
+        // Calculate urgency score based on metadata
+        let urgencyScore = 5;
+        if (priority === 'HIGH') urgencyScore = email.isStarred ? 10 : 8;
+        else if (priority === 'MEDIUM') urgencyScore = 5;
+        else urgencyScore = daysOld > 7 ? 1 : 2;
+
         return {
             id: email.id,
             priority,
+            urgencyScore,
             action,
             summary: email.snippet?.substring(0, 100) || `Email from ${email.from}`,
             suggestedResponseTime: responseTime,
             keyPoints: [`From: ${email.from}`, `Subject: ${email.subject.substring(0, 50)}`],
+            senderImportance: 'UNKNOWN',
             reasoning: 'Smart analysis based on email metadata (fallback mode)',
         };
     }
@@ -200,7 +210,7 @@ export class GeminiService {
         }));
     }
 
-    // Sort analyzed emails by priority
+    // Sort analyzed emails by priority and urgencyScore
     sortByPriority(emails: AnalyzedEmail[]): AnalyzedEmail[] {
         const priorityOrder: Record<Priority, number> = {
             HIGH: 0,
@@ -209,9 +219,18 @@ export class GeminiService {
         };
 
         return [...emails].sort((a, b) => {
+            // First sort by priority tier
             const priorityDiff = priorityOrder[a.analysis.priority] - priorityOrder[b.analysis.priority];
             if (priorityDiff !== 0) return priorityDiff;
-            return a.date.getTime() - b.date.getTime();
+
+            // Within same priority, sort by urgencyScore (higher first)
+            const urgencyA = a.analysis.urgencyScore ?? 5;
+            const urgencyB = b.analysis.urgencyScore ?? 5;
+            const urgencyDiff = urgencyB - urgencyA; // Descending
+            if (urgencyDiff !== 0) return urgencyDiff;
+
+            // Finally, sort by date (newer first for same urgency)
+            return b.date.getTime() - a.date.getTime();
         });
     }
 
