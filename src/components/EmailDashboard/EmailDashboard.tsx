@@ -5,7 +5,7 @@ import Link from 'next/link';
 import styles from './EmailDashboard.module.css';
 import { EmailCard } from '../EmailCard';
 import { EmailSidebar } from '../EmailSidebar/EmailSidebar';
-import { EmailHeatmap } from '../EmailHeatmap';
+import { EmailNodeGraph } from '../EmailNodeGraph';
 import type { AnalyzedEmail, Priority, ActionType } from '@/lib/gemini/service';
 
 interface EmailStats {
@@ -41,7 +41,6 @@ export function EmailDashboard() {
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [filter, setFilter] = useState<FilterType>('all');
-    const [showHeatmap, setShowHeatmap] = useState(true);
 
     const [source, setSource] = useState<'starred' | 'all'>('starred');
     const [error, setError] = useState<string | null>(null);
@@ -392,25 +391,9 @@ export function EmailDashboard() {
                         </div>
                     )}
 
-                    {/* Heatmap Visualization */}
+                    {/* Sender Category Graph - Click to drill down */}
                     {emails.length > 0 && (
-                        <div className={styles.heatmapSection}>
-                            <div className={styles.heatmapHeader}>
-                                <h2 className={styles.sectionTitle}>Urgency Heatmap</h2>
-                                <button
-                                    className={styles.toggleButton}
-                                    onClick={() => setShowHeatmap(!showHeatmap)}
-                                >
-                                    {showHeatmap ? 'Hide' : 'Show'} Heatmap
-                                </button>
-                            </div>
-                            {showHeatmap && (
-                                <EmailHeatmap
-                                    emails={emails}
-                                    height={350}
-                                />
-                            )}
-                        </div>
+                        <EmailNodeGraph emails={emails} />
                     )}
 
                     <div className={styles.filterBar}>

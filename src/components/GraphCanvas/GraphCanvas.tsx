@@ -47,7 +47,7 @@ export default function GraphCanvas() {
     const containerRef = useRef<HTMLDivElement>(null);
     const { filteredConnections, links, selectConnection, selectedConnection, deleteConnection } = useConnections();
     const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
-    // Store node positions to persist across updates
+    // Store node positions to persist across updatess
     const nodePositionsRef = useRef<Map<string, { x: number; y: number }>>(new Map());
 
     useEffect(() => {

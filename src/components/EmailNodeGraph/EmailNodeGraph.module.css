@@ -1,0 +1,56 @@
+/* Email Node Graph - Drill-Down Style */
+.container {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    margin-bottom: 20px;
+    transition: all 0.3s ease;
+}
+
+.container.expanded {
+    background: linear-gradient(135deg, var(--bg-elevated) 0%, rgba(191, 90, 242, 0.05) 100%);
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+}
+
+.backBtn {
+    padding: 5px 12px;
+    background: var(--accent-glow);
+    border: none;
+    border-radius: var(--radius-full);
+    color: var(--accent);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.backBtn:hover {
+    background: rgba(191, 90, 242, 0.25);
+}
+
+.svg {
+    width: 100%;
+    height: 350px;
+    display: block;
+}
+
+.hint {
+    text-align: center;
+    font-size: 11px;
+    color: var(--text-tertiary);
+    margin-top: 8px;
+}

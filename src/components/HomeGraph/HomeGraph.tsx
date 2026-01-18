@@ -23,7 +23,7 @@ export default function HomeGraph() {
     const svgRef = useRef<SVGSVGElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
-    const animationRef = useRef<number>();
+    const animationRef = useRef<number | undefined>(undefined);
 
     useEffect(() => {
         const updateDimensions = () => {
@@ -117,7 +117,7 @@ export default function HomeGraph() {
             .attr('stroke-width', 2);
 
         // Add inner glow for center
-        nodeGroups.filter(d => d.isUser)
+        nodeGroups.filter(d => Boolean(d.isUser))
             .append('circle')
             .attr('r', 35)
             .attr('fill', 'rgba(168, 85, 247, 0.3)');
