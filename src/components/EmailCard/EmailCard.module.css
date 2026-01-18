@@ -1,134 +1,197 @@
-/* Email Card - Matching Connections Style */
+/* Email Card - Redesign */
 .card {
     background: var(--bg-elevated);
     border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    padding: 16px 18px;
+    border-radius: var(--radius-lg); /* More rounded */
+    padding: 20px;
     cursor: pointer;
-    transition: all 0.2s;
-    border-left: 3px solid transparent;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    border-left: 4px solid transparent;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; /* Explicit font */
+    position: relative;
+    overflow: hidden;
 }
 
 .card:hover {
     background: var(--bg-tertiary);
     border-color: var(--border-hover);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
 }
 
-.card.high {
-    border-left-color: var(--heat-hot);
-}
+/* Priority Border Colors */
+.card.high { border-left-color: var(--heat-hot); }
+.card.medium { border-left-color: var(--heat-warm); }
+.card.low { border-left-color: var(--heat-cold); }
 
-.card.medium {
-    border-left-color: var(--heat-warm);
-}
-
-.card.low {
-    border-left-color: var(--heat-cold);
-}
-
-/* Card Header */
-.cardHeader {
+/* Header Layout */
+.header {
     display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 16px;
-    margin-bottom: 6px;
+    flex-direction: column;
+    gap: 8px;
 }
 
-.subject {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text-primary);
-    letter-spacing: -0.01em;
-    line-height: 1.35;
-    flex: 1;
+.headerTop {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
+
+.priorityBadge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-secondary);
+}
+
+.priorityDot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+}
+
+.high .priorityDot { background: var(--heat-hot); }
+.medium .priorityDot { background: var(--heat-warm); }
+.low .priorityDot { background: var(--heat-cold); }
 
 .date {
     font-size: 11px;
     color: var(--text-tertiary);
-    white-space: nowrap;
+    font-feature-settings: "tnum";
 }
 
-/* Sender Info */
-.sender {
-    font-size: 13px;
-    color: var(--text-secondary);
-    margin-bottom: 8px;
-}
-
-/* Summary */
-.summary {
-    font-size: 13px;
-    color: var(--text-secondary);
-    line-height: 1.5;
-    margin-bottom: 12px;
-}
-
-/* Badge Row */
-.badges {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    align-items: center;
-}
-
-.badge {
-    padding: 4px 10px;
-    border-radius: var(--radius-full);
-    font-size: 10px;
+.subject {
+    font-size: 16px;
     font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
+    color: var(--text-primary);
+    line-height: 1.4;
+    letter-spacing: -0.01em;
+    margin: 4px 0;
 }
 
-.priorityBadge.high {
-    background: rgba(255, 107, 107, 0.15);
-    color: var(--heat-hot);
-}
-
-.priorityBadge.medium {
-    background: rgba(255, 192, 120, 0.15);
-    color: var(--heat-warm);
-}
-
-.priorityBadge.low {
-    background: rgba(116, 192, 252, 0.15);
-    color: var(--heat-cold);
-}
-
-.actionBadge {
-    background: var(--accent-glow);
-    color: var(--accent);
-}
-
-.timeBadge {
-    background: var(--bg-tertiary);
-    color: var(--text-tertiary);
-    font-size: 10px;
-}
-
-/* Details Button */
-.detailsButton {
-    padding: 5px 12px;
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-full);
+.sender {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
     color: var(--text-secondary);
-    font-size: 11px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
-    margin-left: auto;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.detailsButton:hover {
-    background: var(--bg-elevated);
+.fromName {
+    font-weight: 500;
     color: var(--text-primary);
 }
 
-/* Starred indicator */
-.starred {
-    color: #ffc078;
+.fromEmail {
+    color: var(--text-tertiary);
+}
+
+/* Summary Text */
+.summary {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Expanded Details */
+.details {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+    animation: slideDown 0.2s ease-out;
+}
+
+.details h4 {
     font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+
+.keyPoints {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.keyPoints li {
+    position: relative;
+    padding-left: 16px;
+    font-size: 13px;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+    line-height: 1.5;
+}
+
+.keyPoints li::before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+}
+
+/* Footer & Actions */
+.footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 4px;
+}
+
+.actionBadge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    background: var(--accent-glow);
+    color: var(--accent);
+    border-radius: var(--radius-full);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    border: 1px solid rgba(191, 90, 242, 0.2);
+}
+
+/* New Expand Button Style */
+.expandButton {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    padding: 6px 14px;
+    border-radius: var(--radius-full);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.expandButton:hover {
+    background: var(--bg-tertiary);
+    border-color: var(--text-secondary);
+}
+
+.expanded .expandButton {
+    background: var(--bg-tertiary);
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
 }

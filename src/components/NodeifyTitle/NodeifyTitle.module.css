@@ -1,0 +1,26 @@
+.container {
+    position: absolute;
+    top: 20%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 5;
+    pointer-events: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-bottom: 20px; /* Space for descenders */
+}
+
+.title {
+    font-size: 8rem;
+    font-weight: 900;
+    color: transparent;
+    background: linear-gradient(180deg, #fff 0%, #a855f7 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    margin: 0;
+    line-height: 1.2; /* Increased to prevent clipping of 'y' */
+    letter-spacing: -4px;
+    filter: drop-shadow(0 0 40px rgba(168, 85, 247, 0.4));
+    padding: 10px; /* Extra safe space */
+}

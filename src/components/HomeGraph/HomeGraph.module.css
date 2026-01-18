@@ -40,9 +40,16 @@
     right: 0;
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-start; /* Changed from space-between */
     padding: 0 24px;
     z-index: 10;
+    pointer-events: none; /* Let clicks pass through header area */
+}
+
+/* Ensure nav links are clickable */
+.navLinks {
+    pointer-events: auto;
+    z-index: 20;
 }
 
 .navLinks {
@@ -78,9 +85,4 @@
     height: 14px;
 }
 
-.title {
-    font-size: 20px;
-    font-weight: 700;
-    color: #f5f5f7;
-    letter-spacing: -0.02em;
-}
+/* .title removed */

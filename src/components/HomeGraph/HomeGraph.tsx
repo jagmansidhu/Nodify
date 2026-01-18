@@ -5,6 +5,8 @@ import * as d3 from 'd3';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import styles from './HomeGraph.module.css';
+import { NodeifyTitle } from '../NodeifyTitle/NodeifyTitle';
+import { ParticleBackground } from '../ParticleBackground/ParticleBackground';
 
 interface OrbitNode {
     id: string;
@@ -46,7 +48,7 @@ export default function HomeGraph() {
 
         const { width, height } = dimensions;
         const centerX = width / 2;
-        const centerY = height / 2;
+        const centerY = height * 0.60; /* 40% from bottom */
 
         // Nodes with orbit properties
         const nodes: OrbitNode[] = [
@@ -188,6 +190,7 @@ export default function HomeGraph() {
 
     return (
         <div ref={containerRef} className={styles.container}>
+            <ParticleBackground />
             <header className={styles.header}>
                 <div className={styles.navLinks}>
                     <Link href="/connections" className={styles.navLink}>
@@ -203,8 +206,8 @@ export default function HomeGraph() {
                         Emails
                     </Link>
                 </div>
-                <h1 className={styles.title}>Nodeify</h1>
             </header>
+            <NodeifyTitle />
             <svg ref={svgRef} className={styles.svg} />
         </div>
     );

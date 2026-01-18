@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import styles from './EmailDashboard.module.css';
+import { ParticleBackground } from '../ParticleBackground/ParticleBackground';
 import { EmailCard } from '../EmailCard';
 import { EmailSidebar } from '../EmailSidebar/EmailSidebar';
 import { EmailNodeGraph } from '../EmailNodeGraph';
@@ -289,6 +290,7 @@ export function EmailDashboard() {
 
     return (
         <div className={styles.container}>
+            <ParticleBackground />
             <header className={styles.header}>
                 <div className={styles.navBar}>
                     <Link href="/" className={styles.navLink}>

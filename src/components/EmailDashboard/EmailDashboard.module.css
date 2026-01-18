@@ -10,9 +10,7 @@
     position: sticky;
     top: 0;
     z-index: 100;
-    background: rgba(13, 13, 13, 0.8);
-    backdrop-filter: saturate(180%) blur(20px);
-    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    background: var(--bg-secondary);
     border-bottom: 1px solid var(--border);
     padding: 14px 24px;
 }
@@ -165,6 +163,8 @@
     padding: 24px;
     max-width: 1400px;
     margin: 0 auto;
+    position: relative;
+    z-index: 1;
 }
 
 .mainContent {
