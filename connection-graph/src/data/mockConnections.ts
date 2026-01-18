@@ -311,7 +311,7 @@ export const mockConnections: Connection[] = [
         company: 'PixelPerfect',
         industry: 'Design',
         email: 'owhite@pixelperfect.io',
-        lastContactDate: daysAgo(110),
+        lastContactDate: daysAgo(85),
         degree: 3,
         connectedThrough: '18',
     },

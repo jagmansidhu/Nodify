@@ -88,27 +88,26 @@ export default function AddConnection() {
                     />
                 </div>
 
-                <div className={styles.row}>
-                    <div className={styles.field}>
-                        <label>Title</label>
-                        <input
-                            type="text"
-                            name="title"
-                            value={formData.title}
-                            onChange={handleChange}
-                            placeholder="Software Engineer"
-                        />
-                    </div>
-                    <div className={styles.field}>
-                        <label>Company</label>
-                        <input
-                            type="text"
-                            name="company"
-                            value={formData.company}
-                            onChange={handleChange}
-                            placeholder="Acme Corp"
-                        />
-                    </div>
+                <div className={styles.field}>
+                    <label>Title</label>
+                    <input
+                        type="text"
+                        name="title"
+                        value={formData.title}
+                        onChange={handleChange}
+                        placeholder="Software Engineer"
+                    />
+                </div>
+
+                <div className={styles.field}>
+                    <label>Company</label>
+                    <input
+                        type="text"
+                        name="company"
+                        value={formData.company}
+                        onChange={handleChange}
+                        placeholder="Acme Corp"
+                    />
                 </div>
 
                 <div className={styles.field}>

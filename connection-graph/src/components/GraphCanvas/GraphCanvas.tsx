@@ -7,7 +7,6 @@ import { useConnections } from '@/context/ConnectionsContext';
 import { getHeatColor } from '@/utils/heatMap';
 import styles from './GraphCanvas.module.css';
 
-// Extended SimNode to include special "user" node
 interface SimNode extends d3.SimulationNodeDatum {
     id: string;
     isUser?: boolean;
@@ -19,11 +18,9 @@ interface SimLink extends d3.SimulationLinkDatum<SimNode> {
     target: SimNode | string;
 }
 
-// Colors
-const USER_COLOR = '#a855f7'; // Purple for user
-const NEUTRAL_COLOR = '#6b7280'; // Gray for 2nd/3rd degree
+const USER_COLOR = '#a855f7';
+const NEUTRAL_COLOR = '#6b7280';
 
-// Get node color based on type
 function getNodeColor(node: SimNode): string {
     if (node.isUser) return USER_COLOR;
     if (!node.connection) return NEUTRAL_COLOR;
@@ -34,9 +31,8 @@ function getNodeColor(node: SimNode): string {
     return NEUTRAL_COLOR;
 }
 
-// Get node size based on type and degree
 function getNodeSize(node: SimNode, baseRadius: number): number {
-    if (node.isUser) return baseRadius * 1.8; // User is largest
+    if (node.isUser) return baseRadius * 1.8;
     if (!node.connection) return baseRadius;
 
     switch (node.connection.degree) {
@@ -52,7 +48,6 @@ export default function GraphCanvas() {
     const { filteredConnections, links, selectConnection, selectedConnection } = useConnections();
     const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
 
-    // Handle resize
     useEffect(() => {
         const updateDimensions = () => {
             if (containerRef.current) {
@@ -66,7 +61,6 @@ export default function GraphCanvas() {
         return () => window.removeEventListener('resize', updateDimensions);
     }, []);
 
-    // D3 Obsidian-style force-directed graph
     useEffect(() => {
         if (!svgRef.current) return;
 
@@ -77,17 +71,15 @@ export default function GraphCanvas() {
         const centerX = width / 2;
         const centerY = height / 2;
 
-        // Create USER node (center)
         const userNode: SimNode = {
             id: 'USER',
             isUser: true,
             x: centerX,
             y: centerY,
-            fx: centerX, // Fixed position at center
+            fx: centerX,
             fy: centerY,
         };
 
-        // Create connection nodes
         const connectionNodes: SimNode[] = filteredConnections.map((conn, i) => ({
             id: conn.id,
             connection: conn,
@@ -95,14 +87,10 @@ export default function GraphCanvas() {
             y: centerY + (Math.random() - 0.5) * 300,
         }));
 
-        // All nodes including user
         const nodes: SimNode[] = [userNode, ...connectionNodes];
         const nodeById = new Map(nodes.map(n => [n.id, n]));
 
-        // Create links: User -> 1st degree, existing links for 2nd/3rd
         const simLinks: SimLink[] = [];
-
-        // Connect all 1st degree to user
         connectionNodes.forEach(node => {
             if (node.connection?.degree === 1) {
                 simLinks.push({
@@ -112,7 +100,6 @@ export default function GraphCanvas() {
             }
         });
 
-        // Add existing relationship links (2nd -> 1st, 3rd -> 2nd)
         links.forEach(link => {
             const source = nodeById.get(link.source);
             const target = nodeById.get(link.target);
@@ -121,10 +108,8 @@ export default function GraphCanvas() {
             }
         });
 
-        // Create defs for filters
         const defs = svg.append('defs');
 
-        // Glow filters
         ['hot', 'warm', 'cold', 'user'].forEach(status => {
             const filter = defs.append('filter')
                 .attr('id', `glow-${status}`)
@@ -142,7 +127,6 @@ export default function GraphCanvas() {
             feMerge.append('feMergeNode').attr('in', 'SourceGraphic');
         });
 
-        // Create zoom behavior
         const zoom = d3.zoom<SVGSVGElement, unknown>()
             .scaleExtent([0.2, 4])
             .on('zoom', (event) => {
@@ -151,13 +135,10 @@ export default function GraphCanvas() {
 
         svg.call(zoom);
 
-        // Container for everything
         const container = svg.append('g');
 
-        // Calculate base radius
         const baseRadius = Math.min(14, Math.max(8, 180 / Math.sqrt(nodes.length)));
 
-        // Draw links FIRST
         const linkElements = container.append('g')
             .attr('class', 'links')
             .selectAll<SVGLineElement, SimLink>('line')
@@ -173,39 +154,64 @@ export default function GraphCanvas() {
                 return source.isUser ? 1.5 : 1;
             });
 
-        // Obsidian-style force simulation
+        // Calculate ring radii for each degree
+        const maxRadius = Math.min(width, height) / 2 - 60;
+        const degreeRadius = {
+            1: maxRadius * 0.3,   // 1st degree ring
+            2: maxRadius * 0.6,   // 2nd degree ring
+            3: maxRadius * 0.9,   // 3rd degree ring
+        };
+
+        // Custom radial force for degree-based positioning
+        const radialForce = (alpha: number) => {
+            connectionNodes.forEach(node => {
+                if (!node.connection || node.x === undefined || node.y === undefined) return;
+
+                const degree = node.connection.degree;
+                const targetRadius = degreeRadius[degree];
+
+                // Calculate current distance from center
+                const dx = node.x - centerX;
+                const dy = node.y - centerY;
+                const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+
+                // Calculate force to push toward target radius
+                const diff = targetRadius - dist;
+                const strength = alpha * 0.15; // Radial force strength
+
+                node.vx = (node.vx || 0) + (dx / dist) * diff * strength;
+                node.vy = (node.vy || 0) + (dy / dist) * diff * strength;
+            });
+        };
+
         const simulation = d3.forceSimulation(nodes)
+            .force('radial', radialForce)
             .force('link', d3.forceLink<SimNode, SimLink>(simLinks)
                 .id(d => d.id)
                 .distance(d => {
                     const source = d.source as SimNode;
                     const target = d.target as SimNode;
                     if (source.isUser) {
-                        // Distance from user based on heat
-                        const heat = target.connection?.heatStatus;
-                        if (heat === 'hot') return 80;
-                        if (heat === 'warm') return 120;
-                        return 160;
+                        return degreeRadius[1]; // Link to 1st degree ring
                     }
-                    return 100;
+                    // Shorter distance for connections within rings
+                    const targetDegree = target.connection?.degree || 2;
+                    return degreeRadius[targetDegree] - degreeRadius[targetDegree - 1 as 1 | 2] || 80;
                 })
-                .strength(0.5))
+                .strength(0.3))
             .force('charge', d3.forceManyBody()
-                .strength(d => (d as SimNode).isUser ? -300 : -80)
-                .distanceMax(400))
+                .strength(d => (d as SimNode).isUser ? -400 : -60)
+                .distanceMax(300))
             .force('collision', d3.forceCollide<SimNode>()
-                .radius(d => getNodeSize(d, baseRadius) * 2)
-                .strength(0.6))
-            .force('center', d3.forceCenter(centerX, centerY).strength(0.05));
+                .radius(d => getNodeSize(d, baseRadius) * 2.2)
+                .strength(0.8));
 
-        // Create node groups
         const nodeGroups = container.selectAll<SVGGElement, SimNode>('g.node')
             .data(nodes, d => d.id)
             .join('g')
             .attr('class', 'node')
             .style('cursor', d => d.isUser ? 'default' : 'pointer');
 
-        // Add circles
         nodeGroups.append('circle')
             .attr('r', d => getNodeSize(d, baseRadius))
             .attr('fill', d => getNodeColor(d))
@@ -230,7 +236,6 @@ export default function GraphCanvas() {
             })
             .style('transition', 'all 0.15s ease');
 
-        // Add labels
         nodeGroups.append('text')
             .attr('text-anchor', 'middle')
             .attr('dy', '0.35em')
@@ -244,12 +249,9 @@ export default function GraphCanvas() {
                 return names.map(n => n[0]).join('').toUpperCase().slice(0, 2);
             });
 
-        // Add tooltips
         nodeGroups.filter(d => !d.isUser)
             .append('title')
             .text(d => `${d.connection!.name}\n${d.connection!.title}\n${d.connection!.company}\n(${d.connection!.degree}° connection)`);
-
-        // Click handler
         nodeGroups.on('click', (event, d) => {
             if (d.isUser) return;
             event.stopPropagation();
@@ -267,7 +269,6 @@ export default function GraphCanvas() {
                     .duration(150)
                     .attr('r', size * 1.3);
 
-                // Highlight connected links
                 linkElements
                     .attr('stroke-opacity', link => {
                         const source = link.source as SimNode;
@@ -339,7 +340,7 @@ export default function GraphCanvas() {
         return () => {
             simulation.stop();
         };
-    }, [filteredConnections, links, dimensions, selectConnection, selectedConnection]);
+    }, [filteredConnections, links, dimensions, selectConnection]);
 
     // Update selection highlight
     useEffect(() => {
