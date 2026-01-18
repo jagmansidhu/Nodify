@@ -1,19 +1,24 @@
 'use client';
 
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import * as d3 from 'd3';
 import styles from './EmailNodeGraph.module.css';
 import { EmailPreview } from '../EmailPreview';
 import type { AnalyzedEmail } from '@/lib/gemini/service';
 
-interface CategoryNode {
+interface SimNode extends d3.SimulationNodeDatum {
     id: string;
-    label: string;
-    count: number;
-    color: string;
-    angle: number;
-    orbitRadius: number;
-    emails: AnalyzedEmail[];
+    isCenter?: boolean;
+    email?: AnalyzedEmail;
+    category?: string;
+    count?: number;
+    color?: string;
+    emails?: AnalyzedEmail[];
+}
+
+interface SimLink extends d3.SimulationLinkDatum<SimNode> {
+    source: SimNode | string;
+    target: SimNode | string;
 }
 
 interface EmailNodeGraphProps {
@@ -22,11 +27,10 @@ interface EmailNodeGraphProps {
     onEmailSelect?: (email: AnalyzedEmail | null) => void;
 }
 
-// Extract domain/sender name from email
-function extractSenderCategory(from: string): string {
+// Extract sender category from email
+function extractCategory(from: string): string {
     const emailMatch = from.match(/<([^>]+)>/);
     const email = emailMatch ? emailMatch[1] : from;
-
     const domainMatch = email.match(/@([^.]+)/);
     if (domainMatch) {
         const domain = domainMatch[1].toLowerCase();
@@ -37,21 +41,21 @@ function extractSenderCategory(from: string): string {
         }
         return domain.charAt(0).toUpperCase() + domain.slice(1);
     }
-
     const nameMatch = from.match(/^([^\s<]+)/);
     return nameMatch ? nameMatch[1] : 'Unknown';
 }
 
-// Generate colors for categories
+// Category colors
+const CATEGORY_COLORS = [
+    '#bf5af2', '#ff6b6b', '#ffc078', '#74c0fc',
+    '#63e6be', '#ffd43b', '#ff922b', '#da77f2',
+];
+
 function getCategoryColor(index: number): string {
-    const colors = [
-        '#bf5af2', '#ff6b6b', '#ffc078', '#74c0fc',
-        '#63e6be', '#ffd43b', '#ff922b', '#da77f2',
-    ];
-    return colors[index % colors.length];
+    return CATEGORY_COLORS[index % CATEGORY_COLORS.length];
 }
 
-// Priority colors for email nodes
+// Priority colors
 function getPriorityColor(priority: string): string {
     switch (priority) {
         case 'HIGH': return '#ff6b6b';
@@ -61,21 +65,20 @@ function getPriorityColor(priority: string): string {
     }
 }
 
-export function EmailNodeGraph({ emails, connectedEmail, onEmailSelect }: EmailNodeGraphProps) {
+const CENTER_COLOR = '#a855f7';
+
+export function EmailNodeGraph({ emails, connectedEmail }: EmailNodeGraphProps) {
     const svgRef = useRef<SVGSVGElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
-    const [dimensions, setDimensions] = useState({ width: 600, height: 400 });
-    const animationRef = useRef<number | undefined>(undefined);
-    const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-    const [zoomedIn, setZoomedIn] = useState(false);
+    const [dimensions, setDimensions] = useState({ width: 800, height: 400 });
     const [previewEmail, setPreviewEmail] = useState<AnalyzedEmail | null>(null);
+    const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
     // Group emails by category
-    const categories = React.useMemo(() => {
+    const categories = useMemo(() => {
         const categoryMap = new Map<string, AnalyzedEmail[]>();
-
         emails.forEach(email => {
-            const category = extractSenderCategory(email.from);
+            const category = extractCategory(email.from);
             if (!categoryMap.has(category)) {
                 categoryMap.set(category, []);
             }
@@ -84,48 +87,39 @@ export function EmailNodeGraph({ emails, connectedEmail, onEmailSelect }: EmailN
 
         return Array.from(categoryMap.entries())
             .sort((a, b) => b[1].length - a[1].length)
-            .slice(0, 6)
-            .map(([label, emailList], index): CategoryNode => ({
+            .slice(0, 8)
+            .map(([label, emailList], index) => ({
                 id: label.toLowerCase().replace(/\s+/g, '-'),
                 label,
-                count: emailList.length,
                 emails: emailList,
+                count: emailList.length,
                 color: getCategoryColor(index),
-                angle: (index / 6) * Math.PI * 2,
-                orbitRadius: 100,
             }));
     }, [emails]);
 
-    const handleBack = useCallback(() => {
-        setSelectedCategory(null);
-        setZoomedIn(false);
-    }, []);
+    // Get emails for selected category
+    const categoryEmails = useMemo(() => {
+        if (!selectedCategory) return [];
+        const cat = categories.find(c => c.label === selectedCategory);
+        return cat?.emails || [];
+    }, [selectedCategory, categories]);
 
     useEffect(() => {
         const updateDimensions = () => {
-            if (svgRef.current) {
-                const { width, height } = svgRef.current.getBoundingClientRect();
+            if (containerRef.current) {
+                const { width, height } = containerRef.current.getBoundingClientRect();
                 setDimensions({ width, height });
             }
         };
-
         updateDimensions();
-        // Use ResizeObserver for more robust resizing
         const resizeObserver = new ResizeObserver(updateDimensions);
-        if (containerRef.current) {
-            resizeObserver.observe(containerRef.current);
-        }
-
-        window.addEventListener('resize', updateDimensions);
-        return () => {
-            window.removeEventListener('resize', updateDimensions);
-            resizeObserver.disconnect();
-        };
+        if (containerRef.current) resizeObserver.observe(containerRef.current);
+        return () => resizeObserver.disconnect();
     }, []);
 
-    // Main categories view
+    // CATEGORY VIEW
     useEffect(() => {
-        if (!svgRef.current || categories.length === 0 || zoomedIn) return;
+        if (!svgRef.current || categories.length === 0 || selectedCategory) return;
 
         const svg = d3.select(svgRef.current);
         svg.selectAll('*').remove();
@@ -133,15 +127,44 @@ export function EmailNodeGraph({ emails, connectedEmail, onEmailSelect }: EmailN
         const { width, height } = dimensions;
         const centerX = width / 2;
         const centerY = height / 2;
-        const orbitRadius = Math.min(width, height) * 0.32;
 
-        // Defs for glows
+        // Center node
+        const centerNode: SimNode = {
+            id: 'CENTER',
+            isCenter: true,
+            x: centerX,
+            y: centerY,
+            fx: centerX,
+            fy: centerY,
+        };
+
+        // Category nodes
+        const categoryNodes: SimNode[] = categories.map((cat, i) => {
+            const angle = (i / categories.length) * Math.PI * 2;
+            const radius = 120;
+            return {
+                id: cat.id,
+                category: cat.label,
+                count: cat.count,
+                emails: cat.emails,
+                color: cat.color,
+                x: centerX + Math.cos(angle) * radius,
+                y: centerY + Math.sin(angle) * radius,
+            };
+        });
+
+        const nodes: SimNode[] = [centerNode, ...categoryNodes];
+        const simLinks: SimLink[] = categoryNodes.map(node => ({
+            source: centerNode,
+            target: node,
+        }));
+
+        // Defs
         const defs = svg.append('defs');
-
         const centerGlow = defs.append('filter')
             .attr('id', 'center-glow')
-            .attr('x', '-100%').attr('y', '-100%').attr('width', '300%').attr('height', '300%');
-        centerGlow.append('feGaussianBlur').attr('stdDeviation', '8').attr('result', 'blur');
+            .attr('x', '-50%').attr('y', '-50%').attr('width', '200%').attr('height', '200%');
+        centerGlow.append('feGaussianBlur').attr('stdDeviation', '6').attr('result', 'blur');
         const centerMerge = centerGlow.append('feMerge');
         centerMerge.append('feMergeNode').attr('in', 'blur');
         centerMerge.append('feMergeNode').attr('in', 'SourceGraphic');
@@ -149,280 +172,383 @@ export function EmailNodeGraph({ emails, connectedEmail, onEmailSelect }: EmailN
         categories.forEach(cat => {
             const filter = defs.append('filter')
                 .attr('id', `glow-${cat.id}`)
-                .attr('x', '-100%').attr('y', '-100%').attr('width', '300%').attr('height', '300%');
-            filter.append('feGaussianBlur').attr('stdDeviation', '5').attr('result', 'blur');
+                .attr('x', '-50%').attr('y', '-50%').attr('width', '200%').attr('height', '200%');
+            filter.append('feGaussianBlur').attr('stdDeviation', '4').attr('result', 'blur');
             const merge = filter.append('feMerge');
             merge.append('feMergeNode').attr('in', 'blur');
             merge.append('feMergeNode').attr('in', 'SourceGraphic');
         });
 
+        // Zoom
+        const zoom = d3.zoom<SVGSVGElement, unknown>()
+            .scaleExtent([0.5, 3])
+            .on('zoom', (event) => container.attr('transform', event.transform));
+        svg.call(zoom);
+
         const container = svg.append('g');
 
-        // Orbit ring
-        container.append('circle')
-            .attr('cx', centerX)
-            .attr('cy', centerY)
-            .attr('r', orbitRadius)
-            .attr('fill', 'none')
-            .attr('stroke', 'rgba(191, 90, 242, 0.12)')
-            .attr('stroke-width', 1.5)
-            .attr('stroke-dasharray', '6,6');
-
-        // Center node
-        const centerGroup = container.append('g')
-            .attr('transform', `translate(${centerX}, ${centerY})`);
-
-        centerGroup.append('circle')
-            .attr('r', 40)
-            .attr('fill', '#bf5af2')
-            .attr('filter', 'url(#center-glow)')
-            .attr('stroke', 'rgba(255,255,255,0.3)')
-            .attr('stroke-width', 2);
-
-        centerGroup.append('text')
-            .text('INBOX')
-            .attr('dy', 5)
-            .attr('text-anchor', 'middle')
-            .attr('fill', 'white')
-            .style('font-size', '12px')
-            .style('font-weight', '600');
-
-        // Category nodes
-        const nodeData = categories.map(cat => ({
-            ...cat,
-            orbitRadius,
-        }));
-
-        const nodeGroups = container.selectAll<SVGGElement, CategoryNode>('g.category-node')
-            .data(nodeData)
-            .join('g')
-            .attr('class', 'category-node')
-            .style('cursor', 'pointer');
-
-        nodeGroups.append('circle')
-            .attr('r', d => 22 + Math.min(d.count * 3, 14))
-            .attr('fill', d => d.color)
-            .attr('filter', d => `url(#glow-${d.id})`)
-            .attr('stroke', 'rgba(255,255,255,0.2)')
+        // Links
+        const linkElements = container.append('g')
+            .selectAll<SVGLineElement, SimLink>('line')
+            .data(simLinks)
+            .join('line')
+            .attr('stroke', 'rgba(168, 85, 247, 0.3)')
             .attr('stroke-width', 1.5);
 
-        nodeGroups.append('text')
-            .text(d => d.count)
-            .attr('dy', 5)
-            .attr('text-anchor', 'middle')
-            .attr('fill', 'white')
-            .style('font-size', '14px')
-            .style('font-weight', '700');
+        // Force simulation
+        const orbitRadius = Math.min(width, height) * 0.3;
+        const simulation = d3.forceSimulation(nodes)
+            .alphaDecay(0.05)
+            .velocityDecay(0.5)
+            .force('link', d3.forceLink<SimNode, SimLink>(simLinks)
+                .id(d => d.id)
+                .distance(orbitRadius)
+                .strength(0.2))
+            .force('charge', d3.forceManyBody()
+                .strength(d => (d as SimNode).isCenter ? -400 : -80))
+            .force('collision', d3.forceCollide<SimNode>()
+                .radius(d => d.isCenter ? 45 : 30 + Math.min((d.count || 0) * 2, 12))
+                .strength(1))
+            .force('radial', d3.forceRadial<SimNode>(
+                d => d.isCenter ? 0 : orbitRadius,
+                centerX, centerY
+            ).strength(0.5))
+            .alpha(0.4);
 
+        // Pre-run
+        for (let i = 0; i < 50; i++) simulation.tick();
+        simulation.alpha(0.1);
+
+        // Node groups
+        const nodeGroups = container.selectAll<SVGGElement, SimNode>('g.node')
+            .data(nodes, d => d.id)
+            .join('g')
+            .attr('class', 'node')
+            .style('cursor', d => d.isCenter ? 'default' : 'pointer');
+
+        // Circles
+        nodeGroups.append('circle')
+            .attr('r', d => {
+                if (d.isCenter) return 40;
+                return 25 + Math.min((d.count || 0) * 2, 10);
+            })
+            .attr('fill', d => d.isCenter ? CENTER_COLOR : d.color || '#6b7280')
+            .attr('filter', d => d.isCenter ? 'url(#center-glow)' : `url(#glow-${d.id})`)
+            .attr('stroke', d => d.isCenter ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.2)')
+            .attr('stroke-width', d => d.isCenter ? 2.5 : 1.5);
+
+        // Labels
         nodeGroups.append('text')
-            .text(d => d.label.length > 8 ? d.label.slice(0, 7) + '…' : d.label)
-            .attr('dy', d => 32 + Math.min(d.count * 3, 14))
             .attr('text-anchor', 'middle')
+            .attr('dy', d => d.isCenter ? '0.35em' : '-0.1em')
+            .attr('fill', '#fff')
+            .attr('font-size', d => d.isCenter ? '13px' : '10px')
+            .attr('font-weight', '600')
+            .attr('pointer-events', 'none')
+            .text(d => {
+                if (d.isCenter) return 'INBOX';
+                const label = d.category || '';
+                return label.length > 7 ? label.slice(0, 6) + '…' : label;
+            });
+
+        // Count labels
+        nodeGroups.filter(d => !d.isCenter)
+            .append('text')
+            .attr('text-anchor', 'middle')
+            .attr('dy', '1em')
             .attr('fill', 'rgba(255,255,255,0.7)')
-            .style('font-size', '11px')
-            .style('font-weight', '500');
+            .attr('font-size', '9px')
+            .attr('font-weight', '500')
+            .attr('pointer-events', 'none')
+            .text(d => `${d.count}`);
 
-        // Click to zoom in
+        // Click to drill down
         nodeGroups.on('click', (event, d) => {
+            if (d.isCenter) return;
             event.stopPropagation();
-            setSelectedCategory(d.label);
-            setZoomedIn(true);
+            setSelectedCategory(d.category || null);
         });
 
-        // Hover effects
+        // Hover
         nodeGroups
             .on('mouseenter', function (event, d) {
+                if (d.isCenter) return;
+                const r = 25 + Math.min((d.count || 0) * 2, 10);
                 d3.select(this).select('circle')
                     .transition().duration(150)
-                    .attr('r', (22 + Math.min(d.count * 3, 14)) * 1.15)
+                    .attr('r', r * 1.15)
                     .attr('stroke', 'white')
                     .attr('stroke-width', 2);
             })
             .on('mouseleave', function (event, d) {
+                if (d.isCenter) return;
+                const r = 25 + Math.min((d.count || 0) * 2, 10);
                 d3.select(this).select('circle')
                     .transition().duration(150)
-                    .attr('r', 22 + Math.min(d.count * 3, 14))
+                    .attr('r', r)
                     .attr('stroke', 'rgba(255,255,255,0.2)')
                     .attr('stroke-width', 1.5);
             });
 
-        // Slow rotation
-        const animate = () => {
-            nodeData.forEach(node => {
-                node.angle += 0.0004;
+        // Drag
+        const drag = d3.drag<SVGGElement, SimNode>()
+            .on('start', (event, d) => {
+                if (d.isCenter) return;
+                if (!event.active) simulation.alphaTarget(0.3).restart();
+                d.fx = d.x; d.fy = d.y;
+            })
+            .on('drag', (event, d) => {
+                if (d.isCenter) return;
+                d.fx = event.x; d.fy = event.y;
+            })
+            .on('end', (event, d) => {
+                if (d.isCenter) return;
+                if (!event.active) simulation.alphaTarget(0);
+                d.fx = null; d.fy = null;
             });
+        nodeGroups.call(drag);
 
-            nodeGroups.attr('transform', d => {
-                const x = centerX + d.orbitRadius * Math.cos(d.angle);
-                const y = centerY + d.orbitRadius * Math.sin(d.angle);
-                return `translate(${x}, ${y})`;
-            });
+        simulation.on('tick', () => {
+            linkElements
+                .attr('x1', d => (d.source as SimNode).x!)
+                .attr('y1', d => (d.source as SimNode).y!)
+                .attr('x2', d => (d.target as SimNode).x!)
+                .attr('y2', d => (d.target as SimNode).y!);
+            nodeGroups.attr('transform', d => `translate(${d.x},${d.y})`);
+        });
 
-            animationRef.current = requestAnimationFrame(animate);
-        };
+        return () => { simulation.stop(); };
+    }, [categories, dimensions, selectedCategory]);
 
-        animate();
-
-        return () => {
-            if (animationRef.current) cancelAnimationFrame(animationRef.current);
-        };
-    }, [dimensions, categories, zoomedIn]);
-
-    // Zoomed-in view showing individual emails
+    // EMAIL VIEW
     useEffect(() => {
-        if (!svgRef.current || !zoomedIn || !selectedCategory) return;
+        if (!svgRef.current || !selectedCategory || categoryEmails.length === 0) return;
 
         const svg = d3.select(svgRef.current);
         svg.selectAll('*').remove();
-
-        const category = categories.find(c => c.label === selectedCategory);
-        if (!category) return;
 
         const { width, height } = dimensions;
         const centerX = width / 2;
         const centerY = height / 2;
 
+        const cat = categories.find(c => c.label === selectedCategory);
+        const catColor = cat?.color || CENTER_COLOR;
+
+        // Center node
+        const centerNode: SimNode = {
+            id: 'CENTER',
+            isCenter: true,
+            category: selectedCategory,
+            x: centerX,
+            y: centerY,
+            fx: centerX,
+            fy: centerY,
+        };
+
+        // Email nodes
+        const emailNodes: SimNode[] = categoryEmails.map((email, i) => {
+            const angle = (i / categoryEmails.length) * Math.PI * 2;
+            const radius = 100 + Math.random() * 20;
+            return {
+                id: email.id,
+                email,
+                x: centerX + Math.cos(angle) * radius,
+                y: centerY + Math.sin(angle) * radius,
+            };
+        });
+
+        const nodes: SimNode[] = [centerNode, ...emailNodes];
+        const simLinks: SimLink[] = emailNodes.map(node => ({
+            source: centerNode,
+            target: node,
+        }));
+
         // Defs
         const defs = svg.append('defs');
-
         const centerGlow = defs.append('filter')
-            .attr('id', 'category-glow')
-            .attr('x', '-100%').attr('y', '-100%').attr('width', '300%').attr('height', '300%');
-        centerGlow.append('feGaussianBlur').attr('stdDeviation', '8').attr('result', 'blur');
+            .attr('id', 'cat-glow')
+            .attr('x', '-50%').attr('y', '-50%').attr('width', '200%').attr('height', '200%');
+        centerGlow.append('feGaussianBlur').attr('stdDeviation', '6').attr('result', 'blur');
         const centerMerge = centerGlow.append('feMerge');
         centerMerge.append('feMergeNode').attr('in', 'blur');
         centerMerge.append('feMergeNode').attr('in', 'SourceGraphic');
 
+        ['HIGH', 'MEDIUM', 'LOW'].forEach(p => {
+            const filter = defs.append('filter')
+                .attr('id', `glow-${p}`)
+                .attr('x', '-50%').attr('y', '-50%').attr('width', '200%').attr('height', '200%');
+            filter.append('feGaussianBlur').attr('stdDeviation', '3').attr('result', 'blur');
+            const merge = filter.append('feMerge');
+            merge.append('feMergeNode').attr('in', 'blur');
+            merge.append('feMergeNode').attr('in', 'SourceGraphic');
+        });
+
+        // Zoom
+        const zoom = d3.zoom<SVGSVGElement, unknown>()
+            .scaleExtent([0.4, 4])
+            .on('zoom', (event) => container.attr('transform', event.transform));
+        svg.call(zoom);
+
         const container = svg.append('g');
 
-        // Orbit ring
-        const orbitRadius = Math.min(width, height) * 0.35;
-        container.append('circle')
-            .attr('cx', centerX)
-            .attr('cy', centerY)
-            .attr('r', orbitRadius)
-            .attr('fill', 'none')
-            .attr('stroke', `${category.color}30`)
-            .attr('stroke-width', 1.5)
-            .attr('stroke-dasharray', '6,6');
+        // Dynamic sizing
+        const baseRadius = Math.min(16, Math.max(10, 150 / Math.sqrt(categoryEmails.length)));
 
-        // Center category node
-        const centerGroup = container.append('g')
-            .attr('transform', `translate(${centerX}, ${centerY})`);
+        // Links
+        const linkElements = container.append('g')
+            .selectAll<SVGLineElement, SimLink>('line')
+            .data(simLinks)
+            .join('line')
+            .attr('stroke', `${catColor}40`)
+            .attr('stroke-width', 1);
 
-        centerGroup.append('circle')
-            .attr('r', 50)
-            .attr('fill', category.color)
-            .attr('filter', 'url(#category-glow)')
-            .attr('stroke', 'rgba(255,255,255,0.4)')
-            .attr('stroke-width', 2);
+        // Force
+        const orbitRadius = Math.min(width, height) * 0.32;
+        const simulation = d3.forceSimulation(nodes)
+            .alphaDecay(0.05)
+            .velocityDecay(0.4)
+            .force('link', d3.forceLink<SimNode, SimLink>(simLinks)
+                .id(d => d.id)
+                .distance(orbitRadius)
+                .strength(0.1))
+            .force('charge', d3.forceManyBody()
+                .strength(d => (d as SimNode).isCenter ? -300 : -20))
+            .force('collision', d3.forceCollide<SimNode>()
+                .radius(d => d.isCenter ? 45 : baseRadius * 2)
+                .strength(1))
+            .force('radial', d3.forceRadial<SimNode>(
+                d => d.isCenter ? 0 : orbitRadius,
+                centerX, centerY
+            ).strength(0.4))
+            .alpha(0.4);
 
-        centerGroup.append('text')
-            .text(category.label)
-            .attr('dy', 5)
-            .attr('text-anchor', 'middle')
-            .attr('fill', 'white')
-            .style('font-size', '14px')
-            .style('font-weight', '600');
+        for (let i = 0; i < 50; i++) simulation.tick();
+        simulation.alpha(0.1);
 
-        // Email nodes
-        const emailNodes = category.emails.map((email, i) => ({
-            ...email,
-            angle: (i / category.emails.length) * Math.PI * 2 - Math.PI / 2,
-            orbitRadius,
-        }));
-
-        const emailGroups = container.selectAll<SVGGElement, typeof emailNodes[0]>('g.email-node')
-            .data(emailNodes)
+        // Nodes
+        const nodeGroups = container.selectAll<SVGGElement, SimNode>('g.node')
+            .data(nodes, d => d.id)
             .join('g')
-            .attr('class', 'email-node')
-            .style('cursor', 'pointer')
-            .attr('transform', d => {
-                const x = centerX + d.orbitRadius * Math.cos(d.angle);
-                const y = centerY + d.orbitRadius * Math.sin(d.angle);
-                return `translate(${x}, ${y})`;
+            .attr('class', 'node')
+            .style('cursor', d => d.isCenter ? 'default' : 'pointer');
+
+        nodeGroups.append('circle')
+            .attr('r', d => d.isCenter ? 45 : baseRadius)
+            .attr('fill', d => d.isCenter ? catColor : getPriorityColor(d.email?.analysis.priority || 'LOW'))
+            .attr('filter', d => d.isCenter ? 'url(#cat-glow)' : `url(#glow-${d.email?.analysis.priority || 'LOW'})`)
+            .attr('stroke', d => d.isCenter ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.2)')
+            .attr('stroke-width', d => d.isCenter ? 2.5 : 1.5);
+
+        nodeGroups.append('text')
+            .attr('text-anchor', 'middle')
+            .attr('dy', '0.35em')
+            .attr('fill', '#fff')
+            .attr('font-size', d => d.isCenter ? '12px' : `${Math.max(8, baseRadius * 0.6)}px`)
+            .attr('font-weight', '600')
+            .attr('pointer-events', 'none')
+            .text(d => {
+                if (d.isCenter) {
+                    const label = selectedCategory;
+                    return label.length > 9 ? label.slice(0, 8) + '…' : label;
+                }
+                return d.email?.subject.charAt(0).toUpperCase() || '?';
             });
 
-        emailGroups.append('circle')
-            .attr('r', 24)
-            .attr('fill', d => getPriorityColor(d.analysis.priority))
-            .attr('stroke', 'rgba(255,255,255,0.3)')
-            .attr('stroke-width', 1.5);
+        // Tooltips
+        nodeGroups.filter(d => !d.isCenter)
+            .append('title')
+            .text(d => `${d.email?.subject}\n${d.email?.analysis.priority} Priority`);
 
-        // Email icon or first letter
-        emailGroups.append('text')
-            .text(d => d.subject.charAt(0).toUpperCase())
-            .attr('dy', 5)
-            .attr('text-anchor', 'middle')
-            .attr('fill', 'white')
-            .style('font-size', '12px')
-            .style('font-weight', '600');
-
-        // Subject label (truncated)
-        emailGroups.append('text')
-            .text(d => d.subject.length > 12 ? d.subject.slice(0, 11) + '…' : d.subject)
-            .attr('dy', 42)
-            .attr('text-anchor', 'middle')
-            .attr('fill', 'rgba(255,255,255,0.7)')
-            .style('font-size', '10px')
-            .style('font-weight', '500');
-
-        // Connection lines
-        emailGroups.each(function (d) {
-            container.insert('line', ':first-child')
-                .attr('x1', centerX)
-                .attr('y1', centerY)
-                .attr('x2', centerX + d.orbitRadius * Math.cos(d.angle))
-                .attr('y2', centerY + d.orbitRadius * Math.sin(d.angle))
-                .attr('stroke', `${category.color}40`)
-                .attr('stroke-width', 1);
-        });
-
-        // Click to open email preview
-        emailGroups.on('click', (event, d) => {
+        // Click
+        nodeGroups.on('click', (event, d) => {
+            if (d.isCenter) return;
             event.stopPropagation();
-            setPreviewEmail(d);
+            setPreviewEmail(d.email || null);
         });
 
-        // Hover effects
-        emailGroups
-            .on('mouseenter', function () {
+        // Hover
+        nodeGroups
+            .on('mouseenter', function (event, d) {
+                if (d.isCenter) return;
                 d3.select(this).select('circle')
                     .transition().duration(150)
-                    .attr('r', 30)
+                    .attr('r', baseRadius * 1.4)
                     .attr('stroke', 'white')
                     .attr('stroke-width', 2);
+                linkElements
+                    .attr('stroke-opacity', link => (link.target as SimNode).id === d.id ? 1 : 0.2)
+                    .attr('stroke-width', link => (link.target as SimNode).id === d.id ? 2 : 1);
             })
-            .on('mouseleave', function () {
+            .on('mouseleave', function (event, d) {
+                if (d.isCenter) return;
                 d3.select(this).select('circle')
                     .transition().duration(150)
-                    .attr('r', 24)
-                    .attr('stroke', 'rgba(255,255,255,0.3)')
+                    .attr('r', baseRadius)
+                    .attr('stroke', 'rgba(255,255,255,0.2)')
                     .attr('stroke-width', 1.5);
+                linkElements.attr('stroke-opacity', 1).attr('stroke-width', 1);
             });
 
-    }, [dimensions, categories, selectedCategory, zoomedIn, onEmailSelect]);
+        // Drag
+        const drag = d3.drag<SVGGElement, SimNode>()
+            .on('start', (event, d) => {
+                if (d.isCenter) return;
+                if (!event.active) simulation.alphaTarget(0.3).restart();
+                d.fx = d.x; d.fy = d.y;
+            })
+            .on('drag', (event, d) => {
+                if (d.isCenter) return;
+                d.fx = event.x; d.fy = event.y;
+            })
+            .on('end', (event, d) => {
+                if (d.isCenter) return;
+                if (!event.active) simulation.alphaTarget(0);
+                d.fx = null; d.fy = null;
+            });
+        nodeGroups.call(drag);
 
-    if (categories.length === 0) return null;
+        svg.on('click', () => setPreviewEmail(null));
+
+        simulation.on('tick', () => {
+            linkElements
+                .attr('x1', d => (d.source as SimNode).x!)
+                .attr('y1', d => (d.source as SimNode).y!)
+                .attr('x2', d => (d.target as SimNode).x!)
+                .attr('y2', d => (d.target as SimNode).y!);
+            nodeGroups.attr('transform', d => `translate(${d.x},${d.y})`);
+        });
+
+        return () => { simulation.stop(); };
+    }, [selectedCategory, categoryEmails, dimensions, categories]);
+
+    const handleBack = useCallback(() => {
+        setSelectedCategory(null);
+        setPreviewEmail(null);
+    }, []);
+
+    if (emails.length === 0) return null;
 
     return (
-        <div ref={containerRef} className={styles.container + (zoomedIn ? ' ' + styles.expanded : '')}>
+        <div ref={containerRef} className={`${styles.container} ${selectedCategory ? styles.expanded : ''}`}>
             <div className={styles.header}>
                 <h3 className={styles.title}>
-                    {zoomedIn ? `${selectedCategory} Emails` : 'Filter by Sender'}
+                    {selectedCategory ? `${selectedCategory} Emails` : 'Email Network'}
                 </h3>
-                {zoomedIn && (
+                {selectedCategory ? (
                     <button className={styles.backBtn} onClick={handleBack}>
-                        ← Back to All
+                        ← Back
                     </button>
+                ) : (
+                    <span className={styles.count}>{categories.length} senders</span>
                 )}
             </div>
             <svg ref={svgRef} className={styles.svg} />
-            {!zoomedIn && (
-                <p className={styles.hint}>Click a category to see emails</p>
-            )}
+            <p className={styles.hint}>
+                {selectedCategory
+                    ? 'Drag • Scroll to zoom • Click for details'
+                    : 'Click a sender to see emails'}
+            </p>
 
-            {/* Email Preview Modal */}
             {previewEmail && (
                 <EmailPreview
                     email={previewEmail}

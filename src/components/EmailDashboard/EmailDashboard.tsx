@@ -6,6 +6,7 @@ import styles from './EmailDashboard.module.css';
 import { EmailCard } from '../EmailCard';
 import { EmailSidebar } from '../EmailSidebar/EmailSidebar';
 import { EmailNodeGraph } from '../EmailNodeGraph';
+import { CACHE_TTL_MS } from '@/lib/constants';
 import type { AnalyzedEmail, Priority, ActionType } from '@/lib/gemini/service';
 
 interface EmailStats {
@@ -31,7 +32,6 @@ interface CachedEmailData {
 type FilterType = 'all' | Priority | ActionType;
 
 const CACHE_KEY = 'email_dashboard_cache';
-const CACHE_TTL = 15 * 60 * 1000; // 15 minutes
 
 function getInitialCache(): { emails: AnalyzedEmail[]; stats: EmailStats | null } {
     if (typeof window === 'undefined') return { emails: [], stats: null };
@@ -39,7 +39,7 @@ function getInitialCache(): { emails: AnalyzedEmail[]; stats: EmailStats | null 
         const cached = localStorage.getItem(CACHE_KEY);
         if (!cached) return { emails: [], stats: null };
         const data: CachedEmailData = JSON.parse(cached);
-        if (Date.now() - data.timestamp < CACHE_TTL) {
+        if (Date.now() - data.timestamp < CACHE_TTL_MS) {
             const emails = data.emails.map(e => ({ ...e, date: new Date(e.date) }));
             return { emails, stats: data.stats };
         }
@@ -86,7 +86,7 @@ export function EmailDashboard() {
             const data: CachedEmailData = JSON.parse(cached);
 
             // Check if cache is still valid (not expired)
-            if (Date.now() - data.timestamp < CACHE_TTL) {
+            if (Date.now() - data.timestamp < CACHE_TTL_MS) {
                 return data;
             }
         } catch (e) {
@@ -412,9 +412,12 @@ export function EmailDashboard() {
                         </div>
                     )}
 
-                    {/* Sender Category Graph - Click to drill down */}
-                    {emails.length > 0 && (
-                        <EmailNodeGraph emails={emails} connectedEmail={status.email} />
+                    {/* Email Network Graph - Force Simulation */}
+                    {filteredEmails.length > 0 && (
+                        <EmailNodeGraph
+                            emails={filteredEmails}
+                            connectedEmail={status.email}
+                        />
                     )}
 
                     <div className={styles.filterBar}>
@@ -476,7 +479,7 @@ export function EmailDashboard() {
                         </div>
                     )}
                 </main>
-            </div>
+            </div >
         </div >
     );
 }

@@ -4,6 +4,7 @@ import { cookies } from 'next/headers';
 import { GmailService, ParsedEmail } from '@/lib/gmail/service';
 import { tokenStorage } from '@/lib/gmail/auth';
 import { getGeminiService } from '@/lib/gemini/service';
+import { EMAIL_FETCH_LIMIT } from '@/lib/constants';
 
 export async function GET(request: NextRequest) {
     try {
@@ -36,10 +37,10 @@ export async function GET(request: NextRequest) {
 
         let emails: ParsedEmail[] = [];
         if (filter === 'starred') {
-            emails = await gmailService.getStarredEmails(15);
+            emails = await gmailService.getStarredEmails(EMAIL_FETCH_LIMIT);
         } else {
             // "all" recent emails
-            emails = await gmailService.getRecentEmails(15);
+            emails = await gmailService.getRecentEmails(EMAIL_FETCH_LIMIT);
         }
 
         console.log(`API: Fetched ${emails.length} emails`);
