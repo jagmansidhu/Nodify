@@ -7,6 +7,7 @@ import { ParticleBackground } from '../ParticleBackground/ParticleBackground';
 import { EmailCard } from '../EmailCard';
 import { EmailSidebar } from '../EmailSidebar/EmailSidebar';
 import { EmailNodeGraph } from '../EmailNodeGraph';
+import { CACHE_TTL_MS } from '@/lib/constants';
 import type { AnalyzedEmail, Priority, ActionType } from '@/lib/gemini/service';
 
 interface EmailStats {
@@ -32,20 +33,34 @@ interface CachedEmailData {
 type FilterType = 'all' | Priority | ActionType;
 
 const CACHE_KEY = 'email_dashboard_cache';
-const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours in ms
+
+function getInitialCache(): { emails: AnalyzedEmail[]; stats: EmailStats | null } {
+    if (typeof window === 'undefined') return { emails: [], stats: null };
+    try {
+        const cached = localStorage.getItem(CACHE_KEY);
+        if (!cached) return { emails: [], stats: null };
+        const data: CachedEmailData = JSON.parse(cached);
+        if (Date.now() - data.timestamp < CACHE_TTL_MS) {
+            const emails = data.emails.map(e => ({ ...e, date: new Date(e.date) }));
+            return { emails, stats: data.stats };
+        }
+    } catch { }
+    return { emails: [], stats: null };
+}
 
 export function EmailDashboard() {
-    // Master list of all fetched emails (includes starred)
-    const [allEmails, setAllEmails] = useState<AnalyzedEmail[]>([]);
-    const [stats, setStats] = useState<EmailStats | null>(null);
+    const initialCache = getInitialCache();
+
+    const [allEmails, setAllEmails] = useState<AnalyzedEmail[]>(initialCache.emails);
+    const [stats, setStats] = useState<EmailStats | null>(initialCache.stats);
     const [status, setStatus] = useState<ConnectionStatus>({ connected: false });
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(initialCache.emails.length === 0);
     const [refreshing, setRefreshing] = useState(false);
     const [filter, setFilter] = useState<FilterType>('all');
 
     const [source, setSource] = useState<'starred' | 'all'>('starred');
     const [error, setError] = useState<string | null>(null);
-    const [usingCache, setUsingCache] = useState(false);
+    const [usingCache, setUsingCache] = useState(initialCache.emails.length > 0);
     const [hasLoadedAll, setHasLoadedAll] = useState(false);
 
     // Derive displayed emails based on source toggle (no API call needed!)
@@ -72,7 +87,7 @@ export function EmailDashboard() {
             const data: CachedEmailData = JSON.parse(cached);
 
             // Check if cache is still valid (not expired)
-            if (Date.now() - data.timestamp < CACHE_TTL) {
+            if (Date.now() - data.timestamp < CACHE_TTL_MS) {
                 return data;
             }
         } catch (e) {
@@ -208,18 +223,25 @@ export function EmailDashboard() {
 
     useEffect(() => {
         const init = async () => {
-            setLoading(true);
+            const hasCachedData = allEmails.length > 0;
+
+            if (!hasCachedData) {
+                setLoading(true);
+            }
+
             const connected = await checkConnection();
             if (connected) {
-                await fetchEmails(false, 'starred'); // Start with starred
+                if (!hasCachedData) {
+                    await fetchEmails(false, 'starred');
+                }
             } else {
-                clearCache(); // Clear cache if not connected
+                clearCache();
             }
             setLoading(false);
         };
         init();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []); // Only run on mount
+    }, []);
 
     // Effect to handle source toggle - fetch new data when switching to 'all'
     useEffect(() => {
@@ -269,10 +291,9 @@ export function EmailDashboard() {
                     <svg className={styles.connectIcon} viewBox="0 0 24 24" fill="currentColor">
                         <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
                     </svg>
-                    <h2 className={styles.connectTitle}>Connect Your Gmail</h2>
+                    <h2 className={styles.connectTitle}>Connect Gmail</h2>
                     <p className={styles.connectDescription}>
-                        Connect your Gmail account to analyze starred emails and get AI-powered insights
-                        on which messages need your attention.
+                        Get AI-powered insights on your emails. We'll analyze what needs your attention most.
                     </p>
                     <a href="/api/email/auth" className={styles.connectButton}>
                         <svg className={styles.googleIcon} viewBox="0 0 24 24">
@@ -281,7 +302,7 @@ export function EmailDashboard() {
                             <path fill="#fff" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
                             <path fill="#fff" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
                         </svg>
-                        Connect with Google
+                        Continue with Google
                     </a>
                 </div>
             </div>
@@ -393,9 +414,12 @@ export function EmailDashboard() {
                         </div>
                     )}
 
-                    {/* Sender Category Graph - Click to drill down */}
-                    {emails.length > 0 && (
-                        <EmailNodeGraph emails={emails} />
+                    {/* Email Network Graph - Force Simulation */}
+                    {filteredEmails.length > 0 && (
+                        <EmailNodeGraph
+                            emails={filteredEmails}
+                            connectedEmail={status.email}
+                        />
                     )}
 
                     <div className={styles.filterBar}>
@@ -452,12 +476,12 @@ export function EmailDashboard() {
                     ) : (
                         <div className={styles.emailGrid}>
                             {filteredEmails.map(email => (
-                                <EmailCard key={email.id} email={email} />
+                                <EmailCard key={email.id} email={email} connectedEmail={status.email} />
                             ))}
                         </div>
                     )}
                 </main>
-            </div>
+            </div >
         </div >
     );
 }

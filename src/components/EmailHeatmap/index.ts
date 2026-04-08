@@ -1,1 +1,0 @@
-export { EmailHeatmap } from './EmailHeatmap';

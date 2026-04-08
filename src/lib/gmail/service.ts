@@ -227,11 +227,12 @@ export class GmailService {
     }
 
     // Fetch full message details for a list of message references
+    // OPTIMIZED: Uses 'metadata' format (faster) since we rely on snippet for analysis
     private async fetchMessages(refs: gmail_v1.Schema$Message[]): Promise<ParsedEmail[]> {
         const messages: ParsedEmail[] = [];
 
-        // Batch fetch in parallel (limit concurrency)
-        const batchSize = 10;
+        // Batch fetch in parallel with larger batch size
+        const batchSize = 20; // Increased from 10
         for (let i = 0; i < refs.length; i += batchSize) {
             const batch = refs.slice(i, i + batchSize);
             const results = await Promise.all(
@@ -240,7 +241,8 @@ export class GmailService {
                     const response = await this.gmail.users.messages.get({
                         userId: 'me',
                         id: ref.id,
-                        format: 'full',
+                        format: 'metadata', // Faster than 'full', includes headers + snippet
+                        metadataHeaders: ['From', 'To', 'Subject', 'Date'],
                     });
                     return parseMessage(response.data);
                 })

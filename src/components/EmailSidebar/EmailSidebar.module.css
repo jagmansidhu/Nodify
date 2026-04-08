@@ -1,34 +1,36 @@
-/* Email Sidebar - Matching Connections Style */
+/* Email Sidebar - Apple-Inspired Design */
 .sidebar {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 14px;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
 }
 
 .section {
-    background: var(--bg-elevated);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    padding: 16px;
+    background: rgba(28, 28, 30, 0.5);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 0.5px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    padding: 14px;
 }
 
 .sectionTitle {
     font-size: 11px;
     font-weight: 600;
-    color: var(--text-tertiary);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    margin-bottom: 12px;
+    color: rgba(255, 255, 255, 0.4);
+    letter-spacing: 0.01em;
+    margin-bottom: 10px;
 }
 
 .card {
-    padding: 12px 14px;
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    margin-bottom: 8px;
+    padding: 11px 12px;
+    background: rgba(118, 118, 128, 0.08);
+    border: none;
+    border-radius: 8px;
+    margin-bottom: 6px;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.15s ease;
 }
 
 .card:last-child {
@@ -36,23 +38,25 @@
 }
 
 .card:hover {
-    background: rgba(255, 255, 255, 0.05);
-    border-color: var(--border-hover);
+    background: rgba(118, 118, 128, 0.15);
+    transform: translateX(2px);
 }
 
 .focusCard {
-    border-left: 3px solid var(--heat-hot);
+    border-left: 3px solid #ff453a;
+    padding-left: 10px;
 }
 
 .winCard {
-    border-left: 3px solid var(--accent);
+    border-left: 3px solid #0a84ff;
+    padding-left: 10px;
 }
 
 .cardTitle {
     font-size: 13px;
     font-weight: 500;
-    color: var(--text-primary);
-    margin-bottom: 4px;
+    color: rgba(255, 255, 255, 0.88);
+    margin-bottom: 3px;
     line-height: 1.35;
     white-space: nowrap;
     overflow: hidden;
@@ -63,12 +67,12 @@
     display: flex;
     justify-content: space-between;
     font-size: 11px;
-    color: var(--text-tertiary);
+    color: rgba(255, 255, 255, 0.4);
 }
 
 .emptyText {
     font-size: 12px;
-    color: var(--text-tertiary);
+    color: rgba(255, 255, 255, 0.35);
     text-align: center;
-    padding: 10px;
+    padding: 12px;
 }

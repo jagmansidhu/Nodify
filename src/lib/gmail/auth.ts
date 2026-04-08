@@ -1,13 +1,13 @@
-// Gmail API configuration and OAuth setup
 import { google, Auth } from 'googleapis';
+import { cookies } from 'next/headers';
 
-// OAuth2 scopes required for Gmail API
 export const GMAIL_SCOPES = [
     'https://www.googleapis.com/auth/gmail.readonly',
     'https://www.googleapis.com/auth/gmail.labels',
 ];
 
-// Create OAuth2 client
+const TOKEN_COOKIE_NAME = 'gmail_tokens';
+
 export function createOAuth2Client(): Auth.OAuth2Client {
     const clientId = process.env.GOOGLE_CLIENT_ID;
     const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
@@ -20,16 +20,14 @@ export function createOAuth2Client(): Auth.OAuth2Client {
     return new google.auth.OAuth2(clientId, clientSecret, redirectUri);
 }
 
-// Generate OAuth authorization URL
 export function getAuthUrl(oauth2Client: Auth.OAuth2Client): string {
     return oauth2Client.generateAuthUrl({
         access_type: 'offline',
         scope: GMAIL_SCOPES,
-        prompt: 'consent', // Force consent to get refresh token
+        prompt: 'consent',
     });
 }
 
-// Exchange authorization code for tokens
 export async function getTokensFromCode(
     oauth2Client: Auth.OAuth2Client,
     code: string
@@ -38,77 +36,74 @@ export async function getTokensFromCode(
     return tokens;
 }
 
-// Create authenticated Gmail client
 export function createGmailClient(oauth2Client: Auth.OAuth2Client) {
     return google.gmail({ version: 'v1', auth: oauth2Client });
 }
 
-// Token storage interface (you can implement different backends)
 export interface TokenStorage {
     getTokens(userId: string): Promise<Auth.Credentials | null>;
     saveTokens(userId: string, tokens: Auth.Credentials): Promise<void>;
     deleteTokens(userId: string): Promise<void>;
 }
 
-// Simple in-memory token storage (replace with database in production)
-/*
-class InMemoryTokenStorage implements TokenStorage {
-    private tokens: Map<string, Auth.Credentials> = new Map();
-
+class CookieTokenStorage implements TokenStorage {
     async getTokens(userId: string): Promise<Auth.Credentials | null> {
-        return this.tokens.get(userId) || null;
-    }
-
-    async saveTokens(userId: string, tokens: Auth.Credentials): Promise<void> {
-        this.tokens.set(userId, tokens);
-    }
-
-    async deleteTokens(userId: string): Promise<void> {
-        this.tokens.delete(userId);
-    }
-}
-*/
-
-import fs from 'fs/promises';
-import path from 'path';
-
-// File-based token storage for development persistence
-class FileTokenStorage implements TokenStorage {
-    private filePath = path.join(process.cwd(), '.tokens.json');
-
-    private async readTokens(): Promise<Map<string, Auth.Credentials>> {
         try {
-            const data = await fs.readFile(this.filePath, 'utf-8');
-            return new Map(JSON.parse(data));
-        } catch {
-            return new Map();
+            const cookieStore = await cookies();
+            const tokenCookie = cookieStore.get(TOKEN_COOKIE_NAME);
+
+            if (!tokenCookie?.value) {
+                return null;
+            }
+
+            const decoded = Buffer.from(tokenCookie.value, 'base64').toString('utf-8');
+            const data = JSON.parse(decoded);
+            return data[userId] || null;
+        } catch (error) {
+            console.error('Error reading tokens from cookie:', error);
+            return null;
         }
     }
 
-    private async writeTokens(tokens: Map<string, Auth.Credentials>): Promise<void> {
-        await fs.writeFile(
-            this.filePath,
-            JSON.stringify(Array.from(tokens.entries()), null, 2)
-        );
-    }
-
-    async getTokens(userId: string): Promise<Auth.Credentials | null> {
-        const tokens = await this.readTokens();
-        return tokens.get(userId) || null;
-    }
-
     async saveTokens(userId: string, tokens: Auth.Credentials): Promise<void> {
-        const allTokens = await this.readTokens();
-        allTokens.set(userId, tokens);
-        await this.writeTokens(allTokens);
+        try {
+            const cookieStore = await cookies();
+
+            let existingData: Record<string, Auth.Credentials> = {};
+            const existing = cookieStore.get(TOKEN_COOKIE_NAME);
+            if (existing?.value) {
+                try {
+                    const decoded = Buffer.from(existing.value, 'base64').toString('utf-8');
+                    existingData = JSON.parse(decoded);
+                } catch {
+                    existingData = {};
+                }
+            }
+
+            existingData[userId] = tokens;
+            const encoded = Buffer.from(JSON.stringify(existingData)).toString('base64');
+
+            cookieStore.set(TOKEN_COOKIE_NAME, encoded, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax',
+                maxAge: 60 * 60 * 24 * 30, // 30 days
+                path: '/',
+            });
+        } catch (error) {
+            console.error('Error saving tokens to cookie:', error);
+            throw error;
+        }
     }
 
     async deleteTokens(userId: string): Promise<void> {
-        const tokens = await this.readTokens();
-        tokens.delete(userId);
-        await this.writeTokens(tokens);
+        try {
+            const cookieStore = await cookies();
+            cookieStore.delete(TOKEN_COOKIE_NAME);
+        } catch (error) {
+            console.error('Error deleting tokens cookie:', error);
+        }
     }
 }
 
-// Export singleton storage instance
-export const tokenStorage = new FileTokenStorage();
+export const tokenStorage = new CookieTokenStorage();

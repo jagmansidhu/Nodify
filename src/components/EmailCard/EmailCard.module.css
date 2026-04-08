@@ -1,9 +1,11 @@
-/* Email Card - Redesign */
+/* Email Card - Apple-Inspired Design */
 .card {
-    background: var(--bg-elevated);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg); /* More rounded */
-    padding: 20px;
+    background: rgba(28, 28, 30, 0.5);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 0.5px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    padding: 16px 18px;
     cursor: pointer;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     border-left: 4px solid transparent;
@@ -36,19 +38,19 @@
 
 .headerTop {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
 }
 
 .priorityBadge {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 6px;
     font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--text-secondary);
+    font-weight: 600;
 }
 
 .priorityDot {
@@ -57,14 +59,40 @@
     border-radius: 50%;
 }
 
-.high .priorityDot { background: var(--heat-hot); }
-.medium .priorityDot { background: var(--heat-warm); }
-.low .priorityDot { background: var(--heat-cold); }
+/* Priority Variants - Apple Colors */
+.card.high .priorityBadge {
+    background: rgba(255, 69, 58, 0.15);
+    color: #ff453a;
+}
+
+.card.high .priorityDot {
+    background: #ff453a;
+    box-shadow: 0 0 6px rgba(255, 69, 58, 0.4);
+}
+
+.card.medium .priorityBadge {
+    background: rgba(255, 159, 10, 0.15);
+    color: #ff9f0a;
+}
+
+.card.medium .priorityDot {
+    background: #ff9f0a;
+    box-shadow: 0 0 6px rgba(255, 159, 10, 0.4);
+}
+
+.card.low .priorityBadge {
+    background: rgba(100, 210, 255, 0.12);
+    color: #64d2ff;
+}
+
+.card.low .priorityDot {
+    background: #64d2ff;
+    box-shadow: 0 0 6px rgba(100, 210, 255, 0.3);
+}
 
 .date {
-    font-size: 11px;
-    color: var(--text-tertiary);
-    font-feature-settings: "tnum";
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.4);
 }
 
 .subject {
@@ -76,7 +104,12 @@
     margin: 4px 0;
 }
 
+/* Sender */
 .sender {
+    margin-bottom: 10px;
+}
+
+.fromName {
     display: flex;
     align-items: center;
     gap: 6px;
@@ -98,35 +131,29 @@
 
 /* Summary Text */
 .summary {
-    font-size: 14px;
-    color: var(--text-secondary);
-    line-height: 1.6;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+    margin-bottom: 12px;
 }
 
-/* Expanded Details */
+.summary p {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.55);
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* Details */
 .details {
-    margin-top: 12px;
-    padding-top: 12px;
-    border-top: 1px solid var(--border);
-    animation: slideDown 0.2s ease-out;
+    padding: 12px 0;
+    border-top: 0.5px solid rgba(255, 255, 255, 0.06);
+    margin-top: 10px;
 }
 
 .details h4 {
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    margin-bottom: 8px;
-}
-
-.keyPoints {
-    list-style: none;
-    padding: 0;
-    margin: 0;
+    color: rgba(255, 255, 255, 0.4);
+    margin: 0 0 8px;
+    letter-spacing: 0.015em;
 }
 
 .keyPoints li {
